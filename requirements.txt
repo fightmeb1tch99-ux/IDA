@@ -7,4 +7,5 @@
 # black>=22.0.0
 # pylint>=2.0.0
 #
+openai>=1.0.0
 # Python version: 3.7+

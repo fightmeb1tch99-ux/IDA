@@ -34,8 +34,8 @@ SEARCH_TIMEOUT = 10  # seconds
 SEARCH_API = "https://api.duckduckgo.com"
 
 # Agent behavior
-AGENT_NAME = "AI Agent"
-AGENT_VERSION = "2.0"
+AGENT_NAME = "IDA"
+AGENT_VERSION = "0.1"
 GREETING_EMOJI = "🤖"
 HELP_EMOJI = "📚"
 

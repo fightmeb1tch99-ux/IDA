@@ -74,7 +74,7 @@ class AIAgent:
     def run_interactive(self):
         """Run the agent in interactive mode."""
         print("\n" + "="*60)
-        print("🤖 AI Agent started (IMPROVED VERSION)")
+        print(f"🤖 {self.memory_manager.get('agent_name', 'IDA')} v {self.memory_manager.get('agent_version', '0.1')} started")
         print("="*60)
         print("Напиши 'помощь' для списка команд")
         print("Напиши 'выход' или 'quit' для выхода\n")
