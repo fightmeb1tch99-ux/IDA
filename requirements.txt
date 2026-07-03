@@ -1,0 +1,10 @@
+# AI Agent - Requirements
+# This project uses only Python standard library, so no external dependencies are required.
+# 
+# For development and testing, you may want to install:
+# pytest>=7.0.0
+# pytest-cov>=4.0.0
+# black>=22.0.0
+# pylint>=2.0.0
+#
+# Python version: 3.7+
