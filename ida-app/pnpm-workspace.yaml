@@ -1,0 +1,21 @@
+minimumReleaseAgeExclude:
+  - '@expo/cli@57.0.4'
+  - '@expo/config-plugins@57.0.2'
+  - '@expo/config@57.0.2'
+  - '@expo/env@2.4.1'
+  - '@expo/fingerprint@0.20.2'
+  - '@expo/image-utils@0.11.1'
+  - '@expo/local-build-cache-provider@57.0.2'
+  - '@expo/metro-config@57.0.3'
+  - '@expo/metro-runtime@57.0.3'
+  - '@expo/prebuild-config@57.0.4'
+  - '@expo/require-utils@57.0.1'
+  - '@expo/schema-utils@57.0.1'
+  - '@expo/ui@57.0.3'
+  - expo-asset@57.0.3
+  - expo-constants@57.0.3
+  - expo-modules-autolinking@57.0.4
+  - expo-modules-core@57.0.2
+  - expo-router@57.0.3
+  - expo-splash-screen@57.0.2
+  - expo@57.0.2
