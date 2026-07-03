@@ -26,7 +26,7 @@ export default function App() {
   const [messages, setMessages] = useState([
     {
       id: '1',
-      content: 'Привет! Я IDA v 0.1. Чем я могу тебе помочь? 🤖',
+      content: 'Привет! Я IDA - Инновационный динамический помощник v 0.1. Чем я могу тебе помочь? 🤖',
       role: 'assistant',
       timestamp: new Date(),
     },
@@ -68,7 +68,7 @@ export default function App() {
           messages: [
             {
               role: 'system',
-              content: 'Ты IDA v 0.1 - умный AI ассистент. Отвечай на русском языке кратко и дружелюбно.',
+              content: 'Ты IDA - Инновационный динамический помощник v 0.1 - умный AI ассистент. Отвечай на русском языке кратко и дружелюбно.',
             },
             {
               role: 'user',
@@ -146,7 +146,7 @@ export default function App() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>IDA v 0.1</Text>
+          <Text style={styles.headerTitle}>IDA - Инновационный динамический помощник v 0.1</Text>
           <Text style={styles.headerSubtitle}>🤖 AI Assistant</Text>
         </View>
 

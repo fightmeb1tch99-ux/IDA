@@ -122,7 +122,7 @@ class Brain:
         
         # 4. Fallback to basic responses if no LLM
         if any(word in text_lower for word in ["привет", "привет!", "привет)", "hi", "hello", "hey"]):
-            return "Йо 👋 Я IDA v 0.1. Чем могу помочь?"
+            return "Йо 👋 Я IDA - Инновационный динамический помощник v 0.1. Чем могу помочь?"
             
         if "как меня зовут" in text_lower:
             name = self.memory.get("name", "я не знаю 😅")
@@ -141,7 +141,7 @@ class Brain:
         try:
             # Build system prompt
             system_prompt = f"""
-            Ты - IDA v 0.1, продвинутый ИИ-агент. 
+            Ты - IDA - Инновационный динамический помощник v 0.1, продвинутый ИИ-агент. 
             Твоя цель - помогать пользователю, поддерживать разговор и быть полезным.
             Ты должен отвечать как настоящий GPT, быть вежливым и умным.
             Имя пользователя: {self.memory.get('name', 'Неизвестно')}.
