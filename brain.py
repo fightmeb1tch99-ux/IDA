@@ -30,7 +30,7 @@ class CommandParser:
             r"который\s+час",
         ],
         "date": [
-            r"(?:какая|какое|скажи|напиши|покажи)?\s*(?:сегодня\s+)?дата",
+            r"(?:какая|какое|скажи|напиши|покажи)?\s*(?:сегодня\s+)?дата|сегодня",
             r"какой\s+(?:сегодня\s+)?день",
             r"текущая\s+дата",
             r"какое\s+число",
@@ -47,12 +47,12 @@ class CommandParser:
             r"calculate\s+(.+)",
         ],
         "create_file": [
-            r"создай\s+файл\s+(.+)",
+            r"(?:создай|сделай)\s+файл\s+(.+)",
             r"сделай\s+файл\s+(.+)",
             r"create\s+file\s+(.+)",
         ],
         "search": [
-            r"найди\s+(.+)",
+            r"(?:найди|ищи|поищи)\s+(.+)",
             r"поищи\s+(.+)",
             r"поиск\s+(.+)",
             r"что\s+такое\s+(.+)",
@@ -70,6 +70,10 @@ class CommandParser:
         "note_list": [
             r"(?:покажи|список)\s+заметки?",
             r"мои\s+заметки",
+        ],
+        "help": [
+            r"помощь|помоги|help",
+            r"help",
         ],
         "stats": [
             r"статистика",
@@ -125,7 +129,7 @@ class Brain:
         if re.search(r"\b(привет|хай|здравствуй|hello|hi|hey)\b", text_lower):
             name = self.memory.get("name")
             greeting = f", {name}!" if name else "!"
-            return f"Привет{greeting} Я IDA v2.0. Чем могу помочь?"
+            return f"Привет{greeting} Я IDA v2.0. Чем могу помочь? 👋"
 
         # Remember name
         m = re.search(r"меня зовут\s+(\S+)", text_lower)
