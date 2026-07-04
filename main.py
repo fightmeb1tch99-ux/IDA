@@ -11,6 +11,27 @@ from brain import Brain
 from memory_manager import MemoryManager
 from tools.tools import TOOLS
 
+# Claude Code style colors
+class Colors:
+    CYAN = '\033[96m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    END = '\033[0m'
+    GRAY = '\033[90m'
+
+ASCII_LOGO = f"""
+{Colors.CYAN}{Colors.BOLD}
+  ██╗██████╗  █████╗ 
+  ██║██╔══██╗██╔══██╗
+  ██║██║  ██║███████║
+  ██║██║  ██║██╔══██║
+  ██║██████╔╝██║  ██║
+  ╚═╝╚═════╝ ╚═╝  ╚═╝
+{Colors.END}{Colors.GRAY}  Инновационный Динамический Помощник v2.0{Colors.END}
+"""
 
 class AIAgent:
     """Main AI Agent orchestrator."""
@@ -24,12 +45,12 @@ class AIAgent:
     def process_input(self, user_input: str) -> str:
         """Process user input and return a response."""
         if not user_input or not isinstance(user_input, str):
-            return "Ошибка: некорректный ввод"
+            return f"{Colors.RED}Ошибка: некорректный ввод{Colors.END}"
         user_input = user_input.strip()
         if not user_input:
-            return "Пожалуйста, напиши что-нибудь"
+            return f"{Colors.YELLOW}Пожалуйста, напиши что-нибудь{Colors.END}"
         if len(user_input) > 4096:
-            return "Ошибка: сообщение слишком длинное (макс. 4096 символов)"
+            return f"{Colors.RED}Ошибка: сообщение слишком длинное{Colors.END}"
 
         log_debug(f"Processing: {user_input[:80]}")
 
@@ -38,12 +59,11 @@ class AIAgent:
         tool_result = None
 
         if tool_name:
-            # Handle stats internally
             if tool_name == "stats":
                 stats = self.memory_manager.get_stats()
-                lines = ["Статистика IDA:"]
+                lines = [f"{Colors.BOLD}Статистика IDA:{Colors.END}"]
                 for k, v in stats.items():
-                    lines.append(f"  {k}: {v}")
+                    lines.append(f"  {Colors.GRAY}{k}:{Colors.END} {v}")
                 tool_result = "\n".join(lines)
             elif tool_name in TOOLS:
                 try:
@@ -52,7 +72,7 @@ class AIAgent:
                     log_info(f"Tool executed: {tool_name}")
                 except Exception as e:
                     log_error(f"Tool execution failed: {tool_name}", e)
-                    tool_result = f"Ошибка инструмента: {str(e)}"
+                    tool_result = f"{Colors.RED}Ошибка инструмента: {str(e)}{Colors.END}"
 
         response = self.brain.generate_response(user_input, tool_result)
         self.brain.add_to_history(user_input, response)
@@ -62,51 +82,54 @@ class AIAgent:
 
     def run_interactive(self):
         """Run the agent in interactive (REPL) mode."""
-        from config import AGENT_NAME, AGENT_VERSION
-        print()
-        print("=" * 60)
-        print(f"  {AGENT_NAME} v{AGENT_VERSION} — Инновационный динамический помощник")
-        print("=" * 60)
-        print("  Напиши «помощь» для списка команд")
-        print("  Напиши «выход» или «quit» для выхода")
+        print(ASCII_LOGO)
+        print(f"{Colors.GRAY}Напиши {Colors.END}{Colors.BOLD}«помощь»{Colors.END}{Colors.GRAY} для списка команд{Colors.END}")
+        print(f"{Colors.GRAY}Напиши {Colors.END}{Colors.BOLD}«выход»{Colors.END}{Colors.GRAY} для завершения{Colors.END}")
         print()
         log_info("IDA started in interactive mode")
 
         try:
             while True:
                 try:
-                    user_input = input("Ты: ").strip()
+                    # Claude-like prompt
+                    user_input = input(f"{Colors.CYAN}{Colors.BOLD}╭─ Ты{Colors.END}\n{Colors.CYAN}{Colors.BOLD}╰─> {Colors.END}").strip()
+                    
                     if not user_input:
                         continue
                     if user_input.lower() in ("выход", "quit", "exit", "bye", "пока"):
-                        print("IDA: До свидания! 👋")
+                        print(f"\n{Colors.GRAY}IDA: До свидания! 👋{Colors.END}")
                         log_info("User exited")
                         break
+                    
                     response = self.process_input(user_input)
-                    print(f"IDA: {response}\n")
+                    
+                    # Claude-like response styling
+                    print(f"\n{Colors.GREEN}{Colors.BOLD}IDA{Colors.END}")
+                    print(f"{response}\n")
+                    
                 except KeyboardInterrupt:
-                    print("\nIDA: До встречи! 👋")
+                    print(f"\n\n{Colors.GRAY}IDA: До встречи! 👋{Colors.END}")
                     log_warning("Interrupted by user")
                     break
                 except Exception as e:
                     log_error("Interactive loop error", e)
-                    print(f"IDA: Произошла ошибка: {str(e)}\n")
+                    print(f"{Colors.RED}IDA: Произошла ошибка: {str(e)}{Colors.END}\n")
         finally:
             self._save_and_exit()
 
     def run_single(self, user_input: str) -> str:
         """Process a single input (non-interactive mode)."""
         response = self.process_input(user_input)
-        print(f"IDA: {response}")
+        print(f"{Colors.GREEN}{Colors.BOLD}IDA:{Colors.END} {response}")
         self.memory_manager.save()
         return response
 
     def show_stats(self):
         """Print memory statistics."""
         stats = self.memory_manager.get_stats()
-        print("\nСтатистика IDA:")
+        print(f"\n{Colors.BOLD}Статистика IDA:{Colors.END}")
         for key, value in stats.items():
-            print(f"  {key}: {value}")
+            print(f"  {Colors.GRAY}{key}:{Colors.END} {value}")
         print()
 
     def show_help(self):
@@ -120,10 +143,8 @@ class AIAgent:
         except Exception as e:
             log_error("Failed to save memory on exit", e)
 
-
 def main():
     agent = AIAgent()
-
     if len(sys.argv) > 1:
         arg = sys.argv[1]
         if arg in ("--help", "-h"):
@@ -140,7 +161,6 @@ def main():
             agent.run_single(" ".join(sys.argv[1:]))
     else:
         agent.run_interactive()
-
 
 if __name__ == "__main__":
     main()
