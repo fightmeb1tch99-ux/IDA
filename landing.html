@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IDA - Инновационный динамический помощник</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            line-height: 1.6;
+        }
+
+        header {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        nav a {
+            color: #cbd5e1;
+            text-decoration: none;
+            margin-left: 2rem;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: #0ea5e9;
+        }
+
+        .hero {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 6rem 2rem;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: #94a3b8;
+            margin-bottom: 2rem;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 4rem;
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0ea5e9, #06b6d4);
+            color: #0f172a;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(14, 165, 233, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid #0ea5e9;
+            color: #0ea5e9;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(14, 165, 233, 0.1);
+        }
+
+        .features {
+            max-width: 1200px;
+            margin: 4rem auto;
+            padding: 0 2rem;
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 1rem;
+            padding: 2rem;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: #0ea5e9;
+            background: rgba(30, 41, 59, 0.8);
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            margin-bottom: 0.5rem;
+            color: #0ea5e9;
+        }
+
+        .feature-card p {
+            color: #94a3b8;
+        }
+
+        .stats {
+            max-width: 1200px;
+            margin: 4rem auto;
+            padding: 2rem;
+            background: rgba(30, 41, 59, 0.3);
+            border-radius: 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            text-align: center;
+        }
+
+        .stat {
+            padding: 1rem;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            color: #0ea5e9;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            color: #94a3b8;
+            margin-top: 0.5rem;
+        }
+
+        .download {
+            max-width: 1200px;
+            margin: 4rem auto;
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(6, 182, 212, 0.1));
+            border: 1px solid rgba(14, 165, 233, 0.2);
+            border-radius: 1rem;
+            text-align: center;
+        }
+
+        .download h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .download p {
+            color: #94a3b8;
+            margin-bottom: 2rem;
+        }
+
+        .download-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .download-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: rgba(14, 165, 233, 0.2);
+            border: 1px solid #0ea5e9;
+            border-radius: 0.5rem;
+            color: #0ea5e9;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .download-btn:hover {
+            background: #0ea5e9;
+            color: #0f172a;
+        }
+
+        footer {
+            max-width: 1200px;
+            margin: 4rem auto 0;
+            padding: 2rem;
+            border-top: 1px solid rgba(148, 163, 184, 0.1);
+            text-align: center;
+            color: #64748b;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+            }
+
+            nav {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">🤖 IDA</div>
+            <nav>
+                <a href="#features">Возможности</a>
+                <a href="#download">Скачать</a>
+                <a href="https://github.com/fightmeb1tch99-ux/SYP-PROJECT">GitHub</a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h1>IDA - Инновационный динамический помощник</h1>
+        <p>Умный AI ассистент с голосовым управлением и красивым интерфейсом</p>
+        <div class="cta-buttons">
+            <button class="btn btn-primary">Скачать приложение</button>
+            <button class="btn btn-secondary">Узнать больше</button>
+        </div>
+    </section>
+
+    <section class="features" id="features">
+        <h2>Возможности</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3>GPT интеграция</h3>
+                <p>Умные ответы благодаря интеграции с OpenAI GPT-3.5</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎤</div>
+                <h3>Голосовой помощник</h3>
+                <p>Говори с IDA и получай ответы голосом</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>Быстрые команды</h3>
+                <p>Одна кнопка для времени, даты, погоды и новостей</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🌙</div>
+                <h3>Тёмная тема</h3>
+                <p>Красивый интерфейс с поддержкой светлой и тёмной темы</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💾</div>
+                <h3>Сохранение истории</h3>
+                <p>Все твои диалоги сохраняются автоматически</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h3>Безопасность</h3>
+                <p>Защита от инъекций и валидация всех данных</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="stats">
+        <div class="stat">
+            <div class="stat-number">100%</div>
+            <div class="stat-label">Open Source</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number">3</div>
+            <div class="stat-label">Языка поддержки</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number">∞</div>
+            <div class="stat-label">Возможностей</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number">0$</div>
+            <div class="stat-label">Стоимость</div>
+        </div>
+    </section>
+
+    <section class="download" id="download">
+        <h2>Начни использовать IDA</h2>
+        <p>Выбери способ установки, который тебе нравится</p>
+        <div class="download-buttons">
+            <a href="https://github.com/fightmeb1tch99-ux/SYP-PROJECT" class="download-btn">
+                <span>📱</span> Мобильное приложение
+            </a>
+            <a href="https://github.com/fightmeb1tch99-ux/SYP-PROJECT" class="download-btn">
+                <span>🐍</span> Python агент
+            </a>
+            <a href="https://github.com/fightmeb1tch99-ux/SYP-PROJECT" class="download-btn">
+                <span>💻</span> Исходный код
+            </a>
+        </div>
+    </section>
+
+    <footer>
+        <p>IDA v 0.1 - Инновационный динамический помощник © 2026</p>
+        <p>Создано с ❤️ для Nothing Phone 2</p>
+    </footer>
+</body>
+</html>
