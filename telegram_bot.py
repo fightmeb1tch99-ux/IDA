@@ -1,6 +1,6 @@
 """
-IDA Telegram Bot — Mobile Access to your AI Assistant
-Allows chatting with IDA, running tools, reminders, vision, and art.
+IDA Telegram Bot — Optimized for Fast Start
+Uses lazy loading for heavy modules like Vision, RAG, and Scheduler.
 """
 
 import os
@@ -10,19 +10,18 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 from dotenv import load_dotenv
 
-from brain import Brain
+# Essential imports only
 from memory_manager import MemoryManager
-from tools.tools import TOOLS, get_available_tools
+from brain import Brain
+from tools.tools import TOOLS
 from logger import log_info, log_error
-from scheduler_manager import scheduler, add_one_time_reminder, setup_morning_brief
-from vision_art import analyze_image, generate_image
 
 # Load environment
 load_dotenv()
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 ALLOWED_USER_IDS = os.getenv("ALLOWED_USER_IDS", "").split(",")
 
-# Initialize IDA core
+# Initialize IDA core (Fast)
 memory_mgr = MemoryManager()
 memory = memory_mgr.load()
 brain = Brain(memory)
@@ -31,24 +30,29 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     chat_id = update.effective_chat.id
     log_info(f"Telegram user started bot: {user.id}")
+    
+    # Lazy load scheduler for morning brief
+    from scheduler_manager import setup_morning_brief
     setup_morning_brief(context.application.bot, chat_id, "09:00")
     
     welcome_text = (
         f"Привет, {user.first_name}! 👋\n\n"
-        "Я IDA — твой мультимодальный помощник.\n"
-        "Теперь я умею видеть фото и рисовать картинки!\n\n"
-        "📸 Пришли мне фото, чтобы я его разобрала.\n"
-        "🎨 Напиши «Нарисуй кота в космосе», чтобы я создала арт."
+        "Я IDA — твой оптимизированный помощник.\n"
+        "Теперь я запускаюсь быстрее! ⚡\n\n"
+        "📸 Пришли мне фото или напиши «Нарисуй...»"
     )
     await update.message.reply_text(welcome_text)
 
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle incoming photos for Vision analysis."""
+    """Handle photos with lazy-loaded Vision module."""
     user_id = str(update.effective_user.id)
     if ALLOWED_USER_IDS[0] != "" and user_id not in ALLOWED_USER_IDS:
         return
 
     await update.message.reply_chat_action(action="typing")
+    
+    # Lazy load Vision
+    from vision_art import analyze_image
     
     photo_file = await update.message.photo[-1].get_file()
     file_path = f"downloads/{photo_file.file_id}.jpg"
@@ -77,6 +81,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     tool_result = None
     if tool_name == "draw" and tool_arg:
+        # Lazy load Image Gen
+        from vision_art import generate_image
         await update.message.reply_text("🎨 Рисую для тебя, подожди немного...")
         await update.message.reply_chat_action(action="upload_photo")
         image_url = generate_image(tool_arg)
@@ -87,6 +93,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             tool_result = image_url
 
     elif tool_name == "remind" and tool_arg:
+        # Lazy load Scheduler
+        from scheduler_manager import add_one_time_reminder
         match1 = re.search(r"(?:напомни|напомни\s+мне)\s+(?:через\s+)?(\d+)\s+(?:минут|минуты|мин)\s+(.+)", user_text.lower())
         match2 = re.search(r"(?:напомни|напомни\s+мне)\s+(.+)\s+(?:через\s+)?(\d+)\s+(?:минут|минуты|мин)", user_text.lower())
         if match1: delay, text = match1.groups()
@@ -121,8 +129,11 @@ async def main():
     application.add_handler(MessageHandler(filters.PHOTO, handle_photo))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
+    # Start Scheduler in background
+    from scheduler_manager import scheduler
     scheduler.start()
-    print("🚀 IDA Telegram Bot (v2.4 Vision/Art) is starting...")
+    
+    print("🚀 IDA Telegram Bot (v2.5 Optimized) is starting...")
     async with application:
         await application.initialize()
         await application.start()
