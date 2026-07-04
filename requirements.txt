@@ -12,3 +12,4 @@ openai>=1.0.0
 # mypy>=1.0.0
 
 # Python version: 3.9+
+python-dotenv
