@@ -19,3 +19,6 @@ gunicorn
 python-telegram-bot>=20.0
 PyPDF2
 sentence-transformers
+SpeechRecognition
+pyttsx3
+PyAudio
