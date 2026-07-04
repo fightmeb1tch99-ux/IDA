@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  ida:
+    build: .
+    container_name: ida_assistant
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./knowledge:/app/knowledge
+      - ./memory.json:/app/memory.json
+    restart: always

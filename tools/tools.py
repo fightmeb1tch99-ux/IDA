@@ -224,6 +224,7 @@ TOOLS = {
     "note_list": list_notes,
     "ask_kb": ask_knowledge,
     "remind": lambda x: "Ок, бро, напоминание поставлено!",
+    "draw": lambda x: "Генерирую шедевр...",
 }
 
 
@@ -241,4 +242,5 @@ def get_available_tools():
         "note_list": "Список заметок",
         "ask_kb": "Поиск по базе знаний (RAG)",
         "remind": "Установка напоминания",
+        "draw": "Генерация изображений (DALL-E)",
     }
