@@ -24,6 +24,11 @@ async def test_os():
     print("\nTest 3: SQLite Storage Check")
     history = os_instance.memory_manager.db.get_recent_history(limit=5)
     print(f"Recent History from DB: {len(history)} items")
+
+    # Test 4: Browser Automation
+    print("\nTest 4: Browser Automation (Searching for IDA OS news)")
+    response4 = await os_instance.process_input("Найди в интернете последние новости про искусственный интеллект за сегодня.")
+    print(f"Browser Response: {response4}")
     
     print("\n--- Test Completed ---")
 

@@ -7,6 +7,7 @@ from typing import Dict, Any, List
 from logger import log_info, log_error, log_debug
 from agents.planner import PlannerAgent
 from agents.executor import ExecutorAgent
+from agents.browser import BrowserAgent
 from brain import Brain
 from memory_manager import MemoryManager
 
@@ -16,9 +17,11 @@ class Orchestrator:
         self.memory = memory
         self.planner = PlannerAgent(brain)
         self.executor = ExecutorAgent(brain)
+        self.browser = BrowserAgent(brain)
         self.agents = {
             "planner": self.planner,
-            "executor": self.executor
+            "executor": self.executor,
+            "browser": self.browser
         }
 
     async def run(self, user_input: str):
@@ -41,7 +44,15 @@ class Orchestrator:
         results = []
         for step in plan:
             log_info(f"Orchestrator: Executing step: {step}")
-            step_result = await self.executor.run(step, context=thought)
+            
+            # Determine which agent should handle the step
+            # More aggressive browser detection
+            browser_keywords = ["поиск", "найти", "сайт", "браузер", "гугл", "search", "browse", "url", "интернет", "internet", "новости", "news"]
+            if any(kw in step.lower() for kw in browser_keywords):
+                step_result = await self.browser.run(step, context=thought)
+            else:
+                step_result = await self.executor.run(step, context=thought)
+                
             results.append(step_result)
             
         # 4. Synthesis
