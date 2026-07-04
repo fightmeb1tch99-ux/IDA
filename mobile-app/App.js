@@ -96,16 +96,17 @@ export default function App() {
 
     try {
       // ДОБАВЬ СВОЙ OPENAI API КЛЮЧ ЗДЕСЬ
-      const OPENAI_API_KEY = 'sk-proj-...'; // Замени на свой ключ
+      // Ключ теперь хранится на сервере
 
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      // Замени localhost на IP своего сервера
+      const SERVER_URL = 'http://192.168.1.100:8000/v1/chat'; 
+      
+      const response = await fetch(SERVER_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
           messages: [
             {
               role: 'system',
@@ -117,7 +118,6 @@ export default function App() {
             },
           ],
           temperature: 0.7,
-          max_tokens: 500,
         }),
       });
 
@@ -125,7 +125,7 @@ export default function App() {
 
       const assistantMessage = {
         id: (Date.now() + 1).toString(),
-        content: data.choices?.[0]?.message?.content || 'Извини, произошла ошибка 😞',
+        content: data.response || 'Извини, произошла ошибка 😞',
         role: 'assistant',
         timestamp: new Date(),
       };
