@@ -14,6 +14,7 @@ import urllib.request
 from datetime import datetime
 from pathlib import Path
 
+from rag import ask_knowledge
 from logger import log_debug, log_error, log_info, log_warning
 from config import SAFE_COMMANDS, COMMAND_TIMEOUT, SEARCH_TIMEOUT, CREATED_FILES_DIR
 
@@ -221,6 +222,7 @@ TOOLS = {
     "search": web_search,
     "note_add": add_note,
     "note_list": list_notes,
+    "ask_kb": ask_knowledge,
 }
 
 
@@ -236,4 +238,5 @@ def get_available_tools():
         "search": "Поиск в интернете (DuckDuckGo)",
         "note_add": "Добавить заметку",
         "note_list": "Список заметок",
+        "ask_kb": "Поиск по базе знаний (RAG)",
     }

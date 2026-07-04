@@ -16,3 +16,6 @@ python-dotenv
 fastapi
 uvicorn
 gunicorn
+python-telegram-bot>=20.0
+PyPDF2
+sentence-transformers
