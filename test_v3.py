@@ -29,6 +29,11 @@ async def test_os():
     print("\nTest 4: Browser Automation (Searching for IDA OS news)")
     response4 = await os_instance.process_input("Найди в интернете последние новости про искусственный интеллект за сегодня.")
     print(f"Browser Response: {response4}")
+
+    # Test 5: Plugin System
+    print("\nTest 5: Plugin System (Weather Plugin)")
+    response5 = await os_instance.process_input("Какая сейчас погода в Москве?")
+    print(f"Plugin Response: {response5}")
     
     print("\n--- Test Completed ---")
 

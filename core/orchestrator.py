@@ -71,3 +71,10 @@ class Orchestrator:
         )
         
         return final_response
+
+    def _detect_plugin(self, step: str) -> str:
+        # Simple plugin detection logic
+        for name in self.plugins.plugins.keys():
+            if name in step.lower():
+                return name
+        return None
