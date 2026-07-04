@@ -99,7 +99,8 @@ export default function App() {
       // Ключ теперь хранится на сервере
 
       // Замени localhost на IP своего сервера
-      const SERVER_URL = 'http://192.168.1.100:8000/v1/chat'; 
+      // Замени на URL своего облачного сервера (например, https://ida-api.onrender.com/v1/chat)
+      const SERVER_URL = 'https://YOUR-PROJECT-NAME.onrender.com/v1/chat'; 
       
       const response = await fetch(SERVER_URL, {
         method: 'POST',
