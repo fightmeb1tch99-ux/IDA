@@ -14,6 +14,8 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import VoiceAssistant from './VoiceAssistant';
+import QuickCommands from './QuickCommands';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const COLORS = {
   primary: '#0a7ea4',
@@ -36,11 +38,40 @@ export default function App() {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showVoiceModal, setShowVoiceModal] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const flatListRef = useRef(null);
 
   useEffect(() => {
     flatListRef.current?.scrollToEnd({ animated: true });
   }, [messages]);
+
+  useEffect(() => {
+    loadMessages();
+  }, []);
+
+  useEffect(() => {
+    saveMessages();
+  }, [messages]);
+
+  const loadMessages = async () => {
+    try {
+      const saved = await AsyncStorage.getItem('ida_messages');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setMessages(parsed);
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    }
+  };
+
+  const saveMessages = async () => {
+    try {
+      await AsyncStorage.setItem('ida_messages', JSON.stringify(messages));
+    } catch (error) {
+      console.error('Error saving messages:', error);
+    }
+  };
 
   const handleVoiceInput = (text) => {
     setInputText(text);
@@ -156,9 +187,29 @@ export default function App() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>IDA - Инновационный динамический помощник v 0.1</Text>
-          <Text style={styles.headerSubtitle}>🤖 AI Assistant</Text>
+          <View style={styles.headerTop}>
+            <View>
+              <Text style={styles.headerTitle}>IDA - Инновационный динамический помощник</Text>
+              <Text style={styles.headerSubtitle}>🤖 AI Assistant v 0.1</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.themeButton}
+              onPress={() => setIsDarkMode(!isDarkMode)}
+            >
+              <MaterialIcons
+                name={isDarkMode ? 'light-mode' : 'dark-mode'}
+                size={24}
+                color={COLORS.foreground}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
+
+        {/* Quick Commands */}
+        <QuickCommands onCommand={(cmd) => {
+          setInputText(cmd);
+          setTimeout(() => handleSendMessage(cmd), 100);
+        }} />
 
         {/* Messages List */}
         <FlatList
@@ -243,6 +294,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: COLORS.background,
   },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  themeButton: {
+    padding: 8,
+  },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -252,6 +311,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: COLORS.muted,
     marginTop: 4,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  themeButton: {
+    padding: 8,
   },
   messagesList: {
     flexGrow: 1,
@@ -363,5 +430,5 @@ const styles = StyleSheet.create({
   closeButtonText: {
     color: COLORS.background,
     fontWeight: '600',
-  },
+  }
 });
