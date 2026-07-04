@@ -123,7 +123,7 @@ def process_command(query):
     
     # 3. Update memory
     brain.add_to_history(query, response)
-    memory_mgr.save(memory)
+    memory_mgr.save()
     
     return response
 

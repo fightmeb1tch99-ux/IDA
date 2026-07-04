@@ -74,7 +74,7 @@ async def chat(request: dict):
         
         # 3. Update memory
         brain.add_to_history(message, response)
-        memory_mgr.save(memory)
+        memory_mgr.save()
         
         return {"response": response}
     except Exception as e:

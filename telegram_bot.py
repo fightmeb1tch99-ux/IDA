@@ -114,7 +114,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # 3. Update memory
     brain.add_to_history(user_text, response)
-    memory_mgr.save(memory)
+    memory_mgr.save()
     
     await update.message.reply_text(response, parse_mode="Markdown")
 
