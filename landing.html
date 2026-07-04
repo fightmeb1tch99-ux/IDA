@@ -1,358 +1,418 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IDA - Инновационный динамический помощник</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IDA — Инновационный динамический помощник</title>
+  <style>
+    :root {
+      --bg: #0a0e1a;
+      --surface: #111827;
+      --card: #1a2235;
+      --primary: #3b82f6;
+      --primary-glow: rgba(59,130,246,0.35);
+      --accent: #06b6d4;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --border: rgba(148,163,184,0.12);
+      --radius: 16px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: #e2e8f0;
-            line-height: 1.6;
-        }
+    /* ── HEADER ── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(20px);
+      background: rgba(10,14,26,0.85);
+      border-bottom: 1px solid var(--border);
+    }
+    .header-inner {
+      max-width: 1200px; margin: 0 auto;
+      padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+    .logo {
+      font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    nav { display: flex; gap: 32px; }
+    nav a {
+      color: var(--muted); text-decoration: none; font-size: 0.95rem;
+      transition: color .2s;
+    }
+    nav a:hover { color: var(--text); }
+    .nav-cta {
+      background: var(--primary); color: #fff !important;
+      padding: 8px 20px; border-radius: 8px; font-weight: 600;
+    }
+    .nav-cta:hover { background: #2563eb; }
 
-        header {
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-            padding: 1rem 2rem;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+    /* ── HERO ── */
+    .hero {
+      min-height: 92vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center; padding: 80px 24px;
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(59,130,246,0.18), transparent),
+        radial-gradient(ellipse 60% 50% at 80% 80%, rgba(6,182,212,0.12), transparent);
+      pointer-events: none;
+    }
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.3);
+      color: var(--primary); padding: 6px 16px; border-radius: 100px;
+      font-size: 0.85rem; font-weight: 600; margin-bottom: 28px;
+      animation: fadeUp .6s ease both;
+    }
+    .badge-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--primary);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.3); }
+    }
+    .hero h1 {
+      font-size: clamp(2.4rem, 6vw, 5rem);
+      font-weight: 900; line-height: 1.1;
+      letter-spacing: -2px; margin-bottom: 24px;
+      animation: fadeUp .7s .1s ease both;
+    }
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      font-size: 1.2rem; color: var(--muted);
+      max-width: 560px; margin-bottom: 44px;
+      animation: fadeUp .7s .2s ease both;
+    }
+    .hero-buttons {
+      display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
+      animation: fadeUp .7s .3s ease both;
+    }
+    .btn {
+      padding: 14px 32px; border-radius: 12px; font-size: 1rem;
+      font-weight: 700; cursor: pointer; border: none;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+      transition: transform .2s, box-shadow .2s, background .2s;
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary {
+      background: var(--primary); color: #fff;
+      box-shadow: 0 4px 24px var(--primary-glow);
+    }
+    .btn-primary:hover { background: #2563eb; box-shadow: 0 8px 32px var(--primary-glow); }
+    .btn-outline {
+      background: transparent; color: var(--text);
+      border: 1.5px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
 
-        .header-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    /* ── TERMINAL DEMO ── */
+    .terminal-wrap {
+      margin-top: 72px; width: 100%; max-width: 680px;
+      animation: fadeUp .8s .4s ease both;
+    }
+    .terminal {
+      background: #0d1117; border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+    }
+    .terminal-bar {
+      background: #161b22; padding: 12px 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-red { background: #ff5f57; }
+    .dot-yellow { background: #febc2e; }
+    .dot-green { background: #28c840; }
+    .terminal-title {
+      flex: 1; text-align: center; font-size: 0.8rem; color: var(--muted);
+    }
+    .terminal-body { padding: 20px 24px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.9rem; }
+    .t-line { margin-bottom: 8px; }
+    .t-prompt { color: var(--primary); }
+    .t-cmd { color: var(--text); }
+    .t-out { color: #4ade80; }
+    .t-out2 { color: var(--accent); }
+    .t-muted { color: var(--muted); }
+    .t-cursor { display: inline-block; width: 2px; height: 1em; background: var(--primary); vertical-align: text-bottom; animation: blink 1s step-end infinite; }
+    @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
 
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            background: linear-gradient(135deg, #0ea5e9, #06b6d4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+    /* ── STATS ── */
+    .stats {
+      max-width: 1200px; margin: 0 auto; padding: 0 24px 80px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 24px;
+    }
+    .stat-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 28px 24px; text-align: center;
+      transition: transform .2s, border-color .2s;
+    }
+    .stat-card:hover { transform: translateY(-4px); border-color: var(--primary); }
+    .stat-num {
+      font-size: 2.4rem; font-weight: 900;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .stat-label { color: var(--muted); font-size: 0.9rem; margin-top: 4px; }
 
-        nav a {
-            color: #cbd5e1;
-            text-decoration: none;
-            margin-left: 2rem;
-            transition: color 0.3s;
-        }
+    /* ── FEATURES ── */
+    .section { max-width: 1200px; margin: 0 auto; padding: 80px 24px; }
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800;
+      text-align: center; margin-bottom: 12px; letter-spacing: -1px;
+    }
+    .section-sub { color: var(--muted); text-align: center; margin-bottom: 56px; font-size: 1.05rem; }
+    .features-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;
+    }
+    .feature-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 32px;
+      transition: transform .2s, border-color .2s, box-shadow .2s;
+    }
+    .feature-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--primary);
+      box-shadow: 0 12px 40px rgba(59,130,246,0.12);
+    }
+    .feature-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem; margin-bottom: 20px;
+    }
+    .feature-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; }
+    .feature-card p { color: var(--muted); font-size: 0.95rem; line-height: 1.6; }
 
-        nav a:hover {
-            color: #0ea5e9;
-        }
+    /* ── INSTALL ── */
+    .install-section { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .install-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;
+    }
+    .install-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 28px; cursor: pointer;
+      transition: border-color .2s, transform .2s;
+      text-decoration: none; color: var(--text);
+      display: block;
+    }
+    .install-card:hover { border-color: var(--primary); transform: translateY(-4px); }
+    .install-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+    .install-card p { color: var(--muted); font-size: 0.9rem; }
+    .code-block {
+      background: #0d1117; border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 18px; margin-top: 14px;
+      font-family: monospace; font-size: 0.85rem; color: #4ade80;
+      overflow-x: auto;
+    }
 
-        .hero {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 6rem 2rem;
-            text-align: center;
-        }
+    /* ── FOOTER ── */
+    footer {
+      max-width: 1200px; margin: 0 auto;
+      padding: 40px 24px; border-top: 1px solid var(--border);
+      display: flex; flex-wrap: wrap; justify-content: space-between;
+      align-items: center; gap: 16px;
+    }
+    .footer-logo {
+      font-size: 1.2rem; font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { color: var(--muted); text-decoration: none; font-size: 0.9rem; transition: color .2s; }
+    .footer-links a:hover { color: var(--text); }
+    .footer-copy { color: var(--muted); font-size: 0.85rem; width: 100%; text-align: center; margin-top: 8px; }
 
-        .hero h1 {
-            font-size: 3.5rem;
-            margin-bottom: 1rem;
-            background: linear-gradient(135deg, #0ea5e9, #06b6d4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
-        .hero p {
-            font-size: 1.25rem;
-            color: #94a3b8;
-            margin-bottom: 2rem;
-        }
-
-        .cta-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-bottom: 4rem;
-        }
-
-        .btn {
-            padding: 0.75rem 2rem;
-            border: none;
-            border-radius: 0.5rem;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 600;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #0ea5e9, #06b6d4);
-            color: #0f172a;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(14, 165, 233, 0.3);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            border: 2px solid #0ea5e9;
-            color: #0ea5e9;
-        }
-
-        .btn-secondary:hover {
-            background: rgba(14, 165, 233, 0.1);
-        }
-
-        .features {
-            max-width: 1200px;
-            margin: 4rem auto;
-            padding: 0 2rem;
-        }
-
-        .features h2 {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 3rem;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-        }
-
-        .feature-card {
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid rgba(148, 163, 184, 0.1);
-            border-radius: 1rem;
-            padding: 2rem;
-            transition: all 0.3s;
-        }
-
-        .feature-card:hover {
-            border-color: #0ea5e9;
-            background: rgba(30, 41, 59, 0.8);
-            transform: translateY(-5px);
-        }
-
-        .feature-icon {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .feature-card h3 {
-            margin-bottom: 0.5rem;
-            color: #0ea5e9;
-        }
-
-        .feature-card p {
-            color: #94a3b8;
-        }
-
-        .stats {
-            max-width: 1200px;
-            margin: 4rem auto;
-            padding: 2rem;
-            background: rgba(30, 41, 59, 0.3);
-            border-radius: 1rem;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 2rem;
-            text-align: center;
-        }
-
-        .stat {
-            padding: 1rem;
-        }
-
-        .stat-number {
-            font-size: 2.5rem;
-            color: #0ea5e9;
-            font-weight: bold;
-        }
-
-        .stat-label {
-            color: #94a3b8;
-            margin-top: 0.5rem;
-        }
-
-        .download {
-            max-width: 1200px;
-            margin: 4rem auto;
-            padding: 3rem 2rem;
-            background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(6, 182, 212, 0.1));
-            border: 1px solid rgba(14, 165, 233, 0.2);
-            border-radius: 1rem;
-            text-align: center;
-        }
-
-        .download h2 {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-        }
-
-        .download p {
-            color: #94a3b8;
-            margin-bottom: 2rem;
-        }
-
-        .download-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .download-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            background: rgba(14, 165, 233, 0.2);
-            border: 1px solid #0ea5e9;
-            border-radius: 0.5rem;
-            color: #0ea5e9;
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-
-        .download-btn:hover {
-            background: #0ea5e9;
-            color: #0f172a;
-        }
-
-        footer {
-            max-width: 1200px;
-            margin: 4rem auto 0;
-            padding: 2rem;
-            border-top: 1px solid rgba(148, 163, 184, 0.1);
-            text-align: center;
-            color: #64748b;
-        }
-
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 2rem;
-            }
-
-            .cta-buttons {
-                flex-direction: column;
-            }
-
-            nav {
-                display: none;
-            }
-        }
-    </style>
+    /* ── RESPONSIVE ── */
+    @media (max-width: 640px) {
+      nav { display: none; }
+      .hero h1 { letter-spacing: -1px; }
+      .hero-buttons { flex-direction: column; align-items: stretch; }
+      .btn { justify-content: center; }
+      footer { flex-direction: column; text-align: center; }
+      .footer-links { justify-content: center; }
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <div class="header-content">
-            <div class="logo">🤖 IDA</div>
-            <nav>
-                <a href="#features">Возможности</a>
-                <a href="#download">Скачать</a>
-                <a href="https://github.com/fightmeb1tch99-ux/SYP-PROJECT">GitHub</a>
-            </nav>
-        </div>
-    </header>
 
-    <section class="hero">
-        <h1>IDA - Инновационный динамический помощник</h1>
-        <p>Умный AI ассистент с голосовым управлением и красивым интерфейсом</p>
-        <div class="cta-buttons">
-            <button class="btn btn-primary">Скачать приложение</button>
-            <button class="btn btn-secondary">Узнать больше</button>
-        </div>
-    </section>
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div class="logo">🤖 IDA</div>
+    <nav>
+      <a href="#features">Возможности</a>
+      <a href="#install">Установка</a>
+      <a href="https://github.com/fightmeb1tch99-ux/SYP-PROJECT" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/fightmeb1tch99-ux/SYP-PROJECT" class="nav-cta" target="_blank" rel="noopener">⭐ Star</a>
+    </nav>
+  </div>
+</header>
 
-    <section class="features" id="features">
-        <h2>Возможности</h2>
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon">🤖</div>
-                <h3>GPT интеграция</h3>
-                <p>Умные ответы благодаря интеграции с OpenAI GPT-3.5</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🎤</div>
-                <h3>Голосовой помощник</h3>
-                <p>Говори с IDA и получай ответы голосом</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">⚡</div>
-                <h3>Быстрые команды</h3>
-                <p>Одна кнопка для времени, даты, погоды и новостей</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🌙</div>
-                <h3>Тёмная тема</h3>
-                <p>Красивый интерфейс с поддержкой светлой и тёмной темы</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">💾</div>
-                <h3>Сохранение истории</h3>
-                <p>Все твои диалоги сохраняются автоматически</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🔒</div>
-                <h3>Безопасность</h3>
-                <p>Защита от инъекций и валидация всех данных</p>
-            </div>
-        </div>
-    </section>
+<!-- HERO -->
+<section class="hero">
+  <div class="badge"><span class="badge-dot"></span> v2.0 — Теперь с погодой и калькулятором</div>
+  <h1>Твой умный<br><span>AI-помощник</span></h1>
+  <p>IDA — Инновационный динамический помощник с GPT-интеграцией, голосовым управлением и красивым мобильным приложением.</p>
+  <div class="hero-buttons">
+    <a href="https://github.com/fightmeb1tch99-ux/SYP-PROJECT" class="btn btn-primary" target="_blank" rel="noopener">
+      🚀 Скачать с GitHub
+    </a>
+    <a href="#features" class="btn btn-outline">Узнать больше →</a>
+  </div>
 
-    <section class="stats">
-        <div class="stat">
-            <div class="stat-number">100%</div>
-            <div class="stat-label">Open Source</div>
-        </div>
-        <div class="stat">
-            <div class="stat-number">3</div>
-            <div class="stat-label">Языка поддержки</div>
-        </div>
-        <div class="stat">
-            <div class="stat-number">∞</div>
-            <div class="stat-label">Возможностей</div>
-        </div>
-        <div class="stat">
-            <div class="stat-number">0$</div>
-            <div class="stat-label">Стоимость</div>
-        </div>
-    </section>
+  <div class="terminal-wrap">
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="dot dot-red"></span>
+        <span class="dot dot-yellow"></span>
+        <span class="dot dot-green"></span>
+        <span class="terminal-title">IDA v2.0 — Terminal</span>
+      </div>
+      <div class="terminal-body">
+        <div class="t-line"><span class="t-prompt">$ </span><span class="t-cmd">python3 main.py</span></div>
+        <div class="t-line t-muted">  IDA v2.0 — Инновационный динамический помощник</div>
+        <div class="t-line t-muted">  Напиши «помощь» для списка команд</div>
+        <div class="t-line">&nbsp;</div>
+        <div class="t-line"><span class="t-prompt">Ты: </span><span class="t-cmd">Привет!</span></div>
+        <div class="t-line"><span class="t-out2">IDA: </span><span class="t-out">Привет! Я IDA v2.0. Чем могу помочь?</span></div>
+        <div class="t-line">&nbsp;</div>
+        <div class="t-line"><span class="t-prompt">Ты: </span><span class="t-cmd">Посчитай 15 * 7 + 3</span></div>
+        <div class="t-line"><span class="t-out2">IDA: </span><span class="t-out">15 * 7 + 3 = 108 ✓</span></div>
+        <div class="t-line">&nbsp;</div>
+        <div class="t-line"><span class="t-prompt">Ты: </span><span class="t-cmd">Какая погода?</span></div>
+        <div class="t-line"><span class="t-out2">IDA: </span><span class="t-out">Yakutsk: ⛅ +18°C</span></div>
+        <div class="t-line">&nbsp;</div>
+        <div class="t-line"><span class="t-prompt">Ты: </span><span class="t-cursor"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
 
-    <section class="download" id="download">
-        <h2>Начни использовать IDA</h2>
-        <p>Выбери способ установки, который тебе нравится</p>
-        <div class="download-buttons">
-            <a href="https://github.com/fightmeb1tch99-ux/SYP-PROJECT" class="download-btn">
-                <span>📱</span> Мобильное приложение
-            </a>
-            <a href="https://github.com/fightmeb1tch99-ux/SYP-PROJECT" class="download-btn">
-                <span>🐍</span> Python агент
-            </a>
-            <a href="https://github.com/fightmeb1tch99-ux/SYP-PROJECT" class="download-btn">
-                <span>💻</span> Исходный код
-            </a>
-        </div>
-    </section>
+<!-- STATS -->
+<div class="stats">
+  <div class="stat-card"><div class="stat-num">100%</div><div class="stat-label">Open Source</div></div>
+  <div class="stat-card"><div class="stat-num">9</div><div class="stat-label">Инструментов</div></div>
+  <div class="stat-card"><div class="stat-num">3</div><div class="stat-label">Языка документации</div></div>
+  <div class="stat-card"><div class="stat-num">0₽</div><div class="stat-label">Стоимость</div></div>
+</div>
 
-    <footer>
-        <p>IDA v 0.1 - Инновационный динамический помощник © 2026</p>
-        <p>Создатель: <strong>Григорьев Айтал Григорьевич</strong> (@Mareioak)</p>
-        <p>Создано с ❤️ для Nothing Phone 2</p>
-    </footer>
+<!-- FEATURES -->
+<section class="section" id="features">
+  <h2 class="section-title">Возможности IDA</h2>
+  <p class="section-sub">Всё что нужно умному помощнику — в одном проекте</p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🧠</div>
+      <h3>GPT-интеграция</h3>
+      <p>Умные ответы через OpenAI API. Поддержка моделей gpt-5-nano, gpt-5-mini и gpt-5. Контекст последних 10 сообщений.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🌤</div>
+      <h3>Погода в реальном времени</h3>
+      <p>Текущая погода через wttr.in — без API-ключа. Просто спроси «Какая погода?»</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🧮</div>
+      <h3>Встроенный калькулятор</h3>
+      <p>«Посчитай 15 * 7 + 3» — мгновенный результат. Безопасное вычисление без eval-уязвимостей.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📝</div>
+      <h3>Заметки</h3>
+      <p>«Запомни купить молоко» — сохраняет заметки с временной меткой. «Покажи заметки» — список всех записей.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎤</div>
+      <h3>Голосовой ассистент</h3>
+      <p>Мобильное приложение на React Native с анимированным аватаром и голосовым вводом.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔒</div>
+      <h3>Безопасность</h3>
+      <p>Whitelist команд, защита от path traversal, валидация ввода, безопасный eval для калькулятора.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">💾</div>
+      <h3>Память и история</h3>
+      <p>Автосохранение диалогов, резервные копии памяти, счётчик взаимодействий и статистика.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔍</div>
+      <h3>Поиск в интернете</h3>
+      <p>Быстрый поиск через DuckDuckGo Instant Answer API без дополнительных ключей.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚙️</div>
+      <h3>Гибкая настройка</h3>
+      <p>Всё в config.py: модель, логи, таймауты, feature flags. Поддержка .env для секретов.</p>
+    </div>
+  </div>
+</section>
+
+<!-- INSTALL -->
+<div class="install-section">
+  <section class="section" id="install">
+    <h2 class="section-title">Быстрый старт</h2>
+    <p class="section-sub">Три шага до запуска IDA</p>
+    <div class="install-grid">
+      <a class="install-card" href="https://github.com/fightmeb1tch99-ux/SYP-PROJECT" target="_blank" rel="noopener">
+        <h3>🐍 Python агент</h3>
+        <p>Запусти IDA в терминале — интерактивный режим с полным набором инструментов.</p>
+        <div class="code-block">git clone https://github.com/fightmeb1tch99-ux/SYP-PROJECT<br>cd SYP-PROJECT<br>pip install -r requirements.txt<br>python3 main.py</div>
+      </a>
+      <a class="install-card" href="https://github.com/fightmeb1tch99-ux/SYP-PROJECT/tree/dev/mobile-app" target="_blank" rel="noopener">
+        <h3>📱 Мобильное приложение</h3>
+        <p>React Native + Expo. Голосовой ассистент, быстрые команды, тёмная тема.</p>
+        <div class="code-block">cd mobile-app<br>npm install<br>npx expo start</div>
+      </a>
+      <a class="install-card" href="https://github.com/fightmeb1tch99-ux/SYP-PROJECT" target="_blank" rel="noopener">
+        <h3>📄 Документация</h3>
+        <p>Подробные README на русском, якутском и английском. Гайд по установке и настройке.</p>
+        <div class="code-block">README.md<br>README_RU.md<br>README_SAH.md<br>INSTALLATION_GUIDE.md</div>
+      </a>
+    </div>
+  </section>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">🤖 IDA v2.0</div>
+  <div class="footer-links">
+    <a href="https://github.com/fightmeb1tch99-ux/SYP-PROJECT" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://github.com/fightmeb1tch99-ux/SYP-PROJECT/issues" target="_blank" rel="noopener">Issues</a>
+    <a href="https://github.com/fightmeb1tch99-ux/SYP-PROJECT/blob/dev/README.md" target="_blank" rel="noopener">Docs</a>
+  </div>
+  <div class="footer-copy">
+    Инновационный динамический помощник &copy; 2026 &mdash;
+    Создатель: <strong>Григорьев Айтал Григорьевич</strong> (@Mareioak) &mdash; Создано с ❤️ для Nothing Phone 2
+  </div>
+</footer>
+
 </body>
 </html>

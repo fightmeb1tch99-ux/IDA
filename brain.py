@@ -1,213 +1,219 @@
+"""
+Brain module for IDA AI Agent v2.0
+Handles NLP, command parsing, and response generation.
+"""
+
 import re
 import os
-from logger import log_debug, log_info, log_error
+
 try:
     from openai import OpenAI
-    HAS_OPENAI = True
+    _openai_available = True
 except ImportError:
-    HAS_OPENAI = False
+    _openai_available = False
+
+from logger import log_info, log_error, log_debug, log_warning
+from config import (
+    LLM_MODEL, LLM_TEMPERATURE, LLM_MAX_TOKENS,
+    OPENAI_API_KEY, OPENAI_API_BASE, CONTEXT_WINDOW,
+)
 
 
 class CommandParser:
-    """Advanced command parser with regex patterns and variations."""
-    
-    def __init__(self):
-        # Define command patterns with variations
-        self.patterns = {
-            "time": [
-                r"(?:какое|которое|скажи|напиши)?\s*время",
-                r"текущее время",
-                r"сколько времени",
-            ],
-            "date": [
-                r"(?:какая|которая|скажи|напиши)?\s*дата",
-                r"текущая дата",
-                r"сегодня",
-                r"какое число",
-            ],
-            "create_file": [
-                r"создай\s+файл\s+(.+)",
-                r"создать\s+файл\s+(.+)",
-                r"новый\s+файл\s+(.+)",
-            ],
-            "run": [
-                r"выполни\s+(.+)",
-                r"запусти\s+(.+)",
-                r"выполнить\s+(.+)",
-                r"команда\s+(.+)",
-            ],
-            "search": [
-                r"найди\s+(.+)",
-                r"поиск\s+(.+)",
-                r"ищи\s+(.+)",
-                r"найти\s+(.+)",
-                r"гугли\s+(.+)",
-            ],
-            "help": [
-                r"помощь",
-                r"помоги",
-                r"что ты умеешь",
-                r"команды",
-                r"справка",
-            ],
-        }
-    
-    def parse(self, text):
-        """
-        Parse user input and return (tool_name, argument).
-        
-        Args:
-            text (str): User input
-            
-        Returns:
-            tuple: (tool_name, argument) or (None, None)
-        """
-        text = text.lower().strip()
-        log_debug(f"Parsing input: {text}")
-        
-        for tool_name, patterns in self.patterns.items():
+    """Parses user input and maps it to tool names using regex patterns."""
+
+    PATTERNS = {
+        "time": [
+            r"(?:какое|которое|скажи|напиши|покажи)?\s*время",
+            r"текущее\s+время",
+            r"сколько\s+(?:сейчас\s+)?времени",
+            r"который\s+час",
+        ],
+        "date": [
+            r"(?:какая|какое|скажи|напиши|покажи)?\s*(?:сегодня\s+)?дата",
+            r"какой\s+(?:сегодня\s+)?день",
+            r"текущая\s+дата",
+            r"какое\s+число",
+        ],
+        "weather": [
+            r"(?:какая|как|скажи|покажи)?\s*погода",
+            r"прогноз\s+погоды",
+            r"температура\s+(?:на\s+улице|сегодня)",
+        ],
+        "calc": [
+            r"посчитай\s+(.+)",
+            r"вычисли\s+(.+)",
+            r"сколько\s+будет\s+([\d\s\+\-\*\/\(\)\.]+)",
+            r"calculate\s+(.+)",
+        ],
+        "create_file": [
+            r"создай\s+файл\s+(.+)",
+            r"сделай\s+файл\s+(.+)",
+            r"create\s+file\s+(.+)",
+        ],
+        "search": [
+            r"найди\s+(.+)",
+            r"поищи\s+(.+)",
+            r"поиск\s+(.+)",
+            r"что\s+такое\s+(.+)",
+        ],
+        "run": [
+            r"выполни\s+(.+)",
+            r"запусти\s+(.+)",
+            r"команда\s+(.+)",
+        ],
+        "note_add": [
+            r"запомни\s+(?:что\s+)?(.+)",
+            r"сохрани\s+заметку[:\s]+(.+)",
+            r"заметка[:\s]+(.+)",
+        ],
+        "note_list": [
+            r"(?:покажи|список)\s+заметки?",
+            r"мои\s+заметки",
+        ],
+        "stats": [
+            r"статистика",
+            r"мои\s+данные",
+        ],
+    }
+
+    def parse(self, text: str):
+        """Return (tool_name, argument) or (None, None)."""
+        text_lower = text.lower().strip()
+        for tool_name, patterns in self.PATTERNS.items():
             for pattern in patterns:
-                match = re.search(pattern, text)
+                match = re.search(pattern, text_lower)
                 if match:
-                    # Extract argument if pattern has a group
-                    arg = match.group(1).strip() if match.groups() else None
-                    log_debug(f"Matched tool: {tool_name}, arg: {arg}")
-                    return (tool_name, arg)
-        
-        return (None, None)
+                    arg = match.group(1).strip() if match.lastindex else None
+                    log_debug(f"Pattern matched: tool={tool_name}, arg={arg}")
+                    return tool_name, arg
+        return None, None
 
 
 class Brain:
-    """AI Brain for decision making and responses."""
-    
-    def __init__(self, memory):
+    """Core reasoning module for IDA."""
+
+    def __init__(self, memory: dict):
         self.memory = memory
-        self.parser = CommandParser()
         self.conversation_history = []
+        self.parser = CommandParser()
         self.client = None
-        
-        # Initialize OpenAI client if key is present
-        api_key = os.getenv("OPENAI_API_KEY")
-        if HAS_OPENAI and api_key:
-            try:
-                # Use Manus pre-configured OpenAI client
-                self.client = OpenAI()
-                log_info("LLM Brain initialized successfully")
-            except Exception as e:
-                log_error("Failed to initialize LLM Brain", e)
-    
-    def decide_tool(self, text):
-        """Decide which tool to use based on user input."""
+
+        if _openai_available:
+            api_key = OPENAI_API_KEY or os.getenv("OPENAI_API_KEY", "")
+            api_base = OPENAI_API_BASE or os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
+            if api_key:
+                try:
+                    self.client = OpenAI(api_key=api_key, base_url=api_base)
+                    log_info(f"OpenAI client initialized (model: {LLM_MODEL})")
+                except Exception as e:
+                    log_error("Failed to initialize OpenAI client", e)
+            else:
+                log_warning("OPENAI_API_KEY not set — using rule-based fallback")
+
+    def decide_tool(self, text: str):
         return self.parser.parse(text)
-    
-    def generate_response(self, text, tool_result=None):
-        """
-        Generate response based on user input and tool results.
-        """
-        text_lower = text.lower()
-        
-        # 1. Check for system commands (Help)
-        if any(word in text_lower for word in ["помощь", "помоги", "что ты умеешь", "команды"]):
+
+    def generate_response(self, user_input: str, tool_result=None) -> str:
+        text_lower = user_input.lower()
+
+        # Help
+        if any(w in text_lower for w in ["помощь", "помоги", "что ты умеешь", "команды", "help"]):
             return self._get_help_message()
-            
-        # 2. If tool result exists, use it as part of the context or direct response
-        if tool_result:
+
+        # Greeting
+        if re.search(r"\b(привет|хай|здравствуй|hello|hi|hey)\b", text_lower):
+            name = self.memory.get("name")
+            greeting = f", {name}!" if name else "!"
+            return f"Привет{greeting} Я IDA v2.0. Чем могу помочь?"
+
+        # Remember name
+        m = re.search(r"меня зовут\s+(\S+)", text_lower)
+        if m:
+            name = m.group(1).capitalize()
+            self.memory["name"] = name
+            return f"Отлично, запомнил: **{name}** Рад познакомиться!"
+
+        # What is my name
+        if re.search(r"как\s+меня\s+зовут", text_lower):
+            name = self.memory.get("name")
+            return f"Тебя зовут **{name}**" if name else "Я пока не знаю твоё имя. Скажи: «Меня зовут [имя]»"
+
+        # Tool result
+        if tool_result is not None:
             if self.client:
-                return self._get_llm_response(f"Результат выполнения команды: {tool_result}. Ответь пользователю на основе этого.")
-            return tool_result
+                prompt = f"Пользователь спросил: «{user_input}». Результат: {tool_result}. Прокомментируй кратко и дружелюбно."
+                return self._get_llm_response(prompt)
+            return str(tool_result)
 
-        # 3. Use LLM if available for "smart" conversation
+        # LLM
         if self.client:
-            return self._get_llm_response(text)
-        
-        # 4. Fallback to basic responses if no LLM
-        if any(word in text_lower for word in ["привет", "привет!", "привет)", "hi", "hello", "hey"]):
-            return "Йо 👋 Я IDA - Инновационный динамический помощник v 0.1. Чем могу помочь?"
-            
-        if "как меня зовут" in text_lower:
-            name = self.memory.get("name", "я не знаю 😅")
-            return f"Тебя зовут {name}"
-            
-        if "меня зовут" in text_lower:
-            name = re.sub(r"меня зовут\s+", "", text_lower).strip()
-            if name:
-                self.memory["name"] = name
-                return f"Ок, запомнил: {name} 📝"
-        
-        return "Я пока не понимаю это 🤖. Напиши 'помощь' для списка команд"
+            return self._get_llm_response(user_input)
 
-    def _get_llm_response(self, user_input):
-        """Get response from LLM (OpenAI)."""
+        return "Я пока не понимаю это. Напиши «помощь» для списка команд."
+
+    def add_to_history(self, user_input: str, response: str):
+        self.conversation_history.append({"user": user_input, "response": response})
+
+    def get_history(self):
+        return self.conversation_history
+
+    def _get_llm_response(self, user_input: str) -> str:
         try:
-            # Build system prompt
-            system_prompt = f"""
-            Ты - IDA - Инновационный динамический помощник v 0.1, продвинутый ИИ-агент. 
-            Твоя цель - помогать пользователю, поддерживать разговор и быть полезным.
-            Ты должен отвечать как настоящий GPT, быть вежливым и умным.
-            Имя пользователя: {self.memory.get('name', 'Неизвестно')}.
-            Если пользователь просит выполнить команду, которую ты уже выполнил (результат предоставлен), прокомментируй результат.
-            """
-            
-            # Prepare messages with history
-            messages = [{"role": "system", "content": system_prompt}]
-            
-            # Add last 5 interactions for context
-            for interaction in self.conversation_history[-5:]:
-                messages.append({"role": "user", "content": interaction["user"]})
-                messages.append({"role": "assistant", "content": interaction["response"]})
-            
-            messages.append({"role": "user", "content": user_input})
-            
-            response = self.client.chat.completions.create(
-                model="gpt-5-mini",
-                messages=messages,
-                temperature=0.7,
-                max_tokens=1000
+            system_prompt = (
+                f"Ты — IDA (Инновационный динамический помощник) v2.0. "
+                f"Отвечай по-русски, кратко и дружелюбно. "
+                f"Имя пользователя: {self.memory.get('name', 'неизвестно')}."
             )
-            
-            if response and response.choices and len(response.choices) > 0:
+            messages = [{"role": "system", "content": system_prompt}]
+            for entry in self.conversation_history[-CONTEXT_WINDOW:]:
+                messages.append({"role": "user", "content": entry["user"]})
+                messages.append({"role": "assistant", "content": entry["response"]})
+            messages.append({"role": "user", "content": user_input})
+
+            response = self.client.chat.completions.create(
+                model=LLM_MODEL,
+                messages=messages,
+                temperature=LLM_TEMPERATURE,
+                max_tokens=LLM_MAX_TOKENS,
+            )
+            if response and response.choices:
                 return response.choices[0].message.content.strip()
-            return "Извини, я не смог получить ответ от мозга 🧠"
-            
+            return "Извини, не смог получить ответ."
         except Exception as e:
             log_error("LLM Error", e)
-            return f"Извини, у меня возникла ошибка при общении: {str(e)}"
-    
-    def _get_help_message(self):
-        """Get help message with available commands."""
-        help_text = """
-📚 **Доступные команды:**
+            return f"Ошибка LLM: {str(e)}"
 
-⏰ **Время и дата:**
-  - "Какое время?" → текущее время
-  - "Какая дата?" → текущая дата
+    def _get_help_message(self) -> str:
+        return """Доступные команды IDA v2.0:
 
-📁 **Работа с файлами:**
-  - "Создай файл [имя]" → создать новый файл
+Время и дата:
+  - «Какое время?» — текущее время
+  - «Какая дата?» — текущая дата
 
-🔍 **Поиск:**
-  - "Найди [запрос]" → поиск в интернете
+Погода:
+  - «Какая погода?» — текущая погода
 
-⚙️ **Команды:**
-  - "Выполни [команда]" → запустить безопасную команду
+Калькулятор:
+  - «Посчитай 15 * 7 + 3» — результат
 
-👤 **Личное:**
-  - "Меня зовут [имя]" → сохранить имя
-  - "Как меня зовут?" → узнать своё имя
+Файлы:
+  - «Создай файл notes.txt» — создать файл
 
-❓ **Справка:**
-  - "Помощь" → показать эту справку
-        """
-        return help_text.strip()
-    
-    def add_to_history(self, user_input, response):
-        """Add interaction to conversation history."""
-        self.conversation_history.append({
-            "user": user_input,
-            "response": response
-        })
-        log_debug(f"Added to history: {user_input} -> {response[:50]}...")
-    
-    def get_history(self):
-        """Get conversation history."""
-        return self.conversation_history
+Поиск:
+  - «Найди Python туториал» — поиск
+
+Заметки:
+  - «Запомни купить молоко» — сохранить заметку
+  - «Покажи заметки» — список заметок
+
+Команды:
+  - «Выполни ls» — безопасная команда
+
+Личное:
+  - «Меня зовут [имя]» — сохранить имя
+  - «Как меня зовут?» — узнать имя
+
+Прочее:
+  - «Статистика» — данные о сессии
+  - «Выход» / «quit» — завершить работу"""
