@@ -1,5 +1,5 @@
 """
-IDA Jarvis Module — System Integration v1.0
+IDA IDA_System Module — System Integration v1.0
 Allows IDA to control your PC (Apps, Volume, Media, Files).
 """
 
@@ -11,12 +11,12 @@ import webbrowser
 from logger import log_info, log_error, log_warning
 from main import AIAgent
 
-class JarvisController:
+class IDA_SystemController:
     """Controls OS-level functions for IDA."""
     
     def __init__(self):
         self.os_type = platform.system()
-        log_info(f"Jarvis Controller initialized for {self.os_type}")
+        log_info(f"IDA_System Controller initialized for {self.os_type}")
 
     def open_app(self, app_name):
         """Open a system application."""
@@ -27,7 +27,7 @@ class JarvisController:
                 subprocess.run(["open", "-a", app_name])
             else:  # Linux
                 subprocess.run(["xdg-open", app_name])
-            return f"Открываю {app_name}, сэр."
+            return f"Открываю {app_name}, бро."
         except Exception as e:
             log_error(f"Failed to open app {app_name}", e)
             return f"Не удалось открыть {app_name}."
@@ -48,17 +48,17 @@ class JarvisController:
             return "Прибавляю громкость."
         return "Команда не распознана."
 
-class IDA_Jarvis(AIAgent):
-    """Extended IDA Agent with Jarvis capabilities."""
+class IDA_IDA_System(AIAgent):
+    """Extended IDA Agent with IDA_System capabilities."""
     
     def __init__(self):
         super().__init__()
-        self.controller = JarvisController()
+        self.controller = IDA_SystemController()
         
     def process_input(self, user_input):
         user_input = user_input.lower()
         
-        # 1. Check for Jarvis-specific commands
+        # 1. Check for IDA_System-specific commands
         if "открой" in user_input:
             app = user_input.replace("открой", "").strip()
             return self.controller.open_app(app)
@@ -71,6 +71,6 @@ class IDA_Jarvis(AIAgent):
         return super().process_input(user_input)
 
 if __name__ == "__main__":
-    print("🤖 IDA: Система 'Джарвис' активирована.")
-    jarvis = IDA_Jarvis()
-    jarvis.run_interactive()
+    print("🤖 IDA: Система 'Система IDA' активирована.")
+    ida_system = IDA_IDA_System()
+    ida_system.run_interactive()
