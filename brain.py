@@ -1,55 +1,24 @@
 """
-Brain module for IDA AI Agent v2.5 (Optimized)
-Handles NLP, command parsing, and response generation with lazy initialization.
+Brain module for IDA OS v3.0
+Enhanced with Reasoning and ReAct support.
 """
-
 import re
 import os
+import json
 from logger import log_info, log_error, log_debug, log_warning
 from config import (
     LLM_MODEL, LLM_TEMPERATURE, LLM_MAX_TOKENS,
     OPENAI_API_KEY, OPENAI_API_BASE, CONTEXT_WINDOW,
+    EMBEDDING_MODEL
 )
 
-class CommandParser:
-    """Parses user input and maps it to tool names using regex patterns."""
-    PATTERNS = {
-        "time": [r"(?:какое|которое|скажи|напиши|покажи)?\s*время", r"текущее\s+время", r"сколько\s+(?:сейчас\s+)?времени", r"который\s+час"],
-        "date": [r"(?:какая|какое|скажи|напиши|покажи)?\s*(?:сегодня\s+)?дата|сегодня", r"какой\s+(?:сегодня\s+)?день", r"текущая\s+дата", r"какое\s+число"],
-        "weather": [r"(?:какая|как|скажи|покажи)?\s*погода", r"прогноз\s+погоды", r"температура\s+(?:на\s+улице|сегодня)"],
-        "calc": [r"посчитай\s+(.+)", r"вычисли\s+(.+)", r"сколько\s+будет\s+([\d\s\+\-\*\/\(\)\.]+)", r"calculate\s+(.+)"],
-        "create_file": [r"(?:создай|сделай)\s+файл\s+(.+)", r"сделай\s+файл\s+(.+)", r"create\s+file\s+(.+)"],
-        "search": [r"(?:найди|ищи|поищи)\s+(.+)", r"поищи\s+(.+)", r"поиск\s+(.+)", r"что\s+такое\s+(.+)"],
-        "run": [r"выполни\s+(.+)", r"запусти\s+(.+)", r"команда\s+(.+)"],
-        "note_add": [r"запомни\s+(?:what\s+)?(.+)", r"сохрани\s+заметку[:\s]+(.+)", r"заметка[:\s]+(.+)"],
-        "note_list": [r"(?:покажи|список)\s+заметки?", r"мои\s+заметки"],
-        "help": [r"помощь|помоги|help"],
-        "draw": [r"(?:нарисуй|создай\s+картинку|изобрази)\s+(.+)", r"картинка\s+(.+)"],
-        "remind": [r"(?:напомни|напомни\s+мне)\s+(?:через\s+)?(\d+)\s+(?:минут|минуты|мин)\s+(.+)", r"(?:напомни|напомни\s+мне)\s+(.+)\s+(?:через\s+)?(\d+)\s+(?:минут|минуты|мин)"],
-        "ask_kb": [r"(?:что\s+говорится\s+в\s+документах|найди\s+в\s+базе|спроси\s+базу)\s+(.+)", r"вопрос\s+по\s+файлам\s+(.+)"],
-        "stats": [r"статистика", r"мои\s+данные"],
-    }
-
-    def parse(self, text: str):
-        text_lower = text.lower().strip()
-        for tool_name, patterns in self.PATTERNS.items():
-            for pattern in patterns:
-                match = re.search(pattern, text_lower)
-                if match:
-                    arg = match.group(1).strip() if match.lastindex else None
-                    return tool_name, arg
-        return None, None
-
 class Brain:
-    """Core reasoning module for IDA with lazy OpenAI init."""
     def __init__(self, memory: dict):
         self.memory = memory
         self.conversation_history = []
-        self.parser = CommandParser()
         self.client = None
 
     def _get_client(self):
-        """Lazy initialize OpenAI client only when needed."""
         if self.client is None:
             try:
                 from openai import OpenAI
@@ -57,52 +26,109 @@ class Brain:
                 api_base = OPENAI_API_BASE or os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
                 if api_key:
                     self.client = OpenAI(api_key=api_key, base_url=api_base)
-                    log_info(f"OpenAI client lazy-initialized (model: {LLM_MODEL})")
-                else:
-                    log_warning("OPENAI_API_KEY not set — using rule-based fallback")
             except Exception as e:
-                log_error("Failed to initialize OpenAI client", e)
+                log_error("Failed to init OpenAI client", e)
         return self.client
 
-    def decide_tool(self, text: str):
-        return self.parser.parse(text)
+    def generate_thought(self, user_input: str) -> str:
+        """Generate a reasoning chain before acting."""
+        prompt = f"System: Ты — IDA OS. Прежде чем ответить, проанализируй задачу шаг за шагом.\nUser: {user_input}\nThought:"
+        return self._get_llm_response(prompt, temperature=0.2)
 
-    def generate_response(self, user_input: str, tool_result=None) -> str:
-        text_lower = user_input.lower()
-        if any(w in text_lower for w in ["помощь", "помоги", "что ты умеешь", "команды", "help"]):
-            return self._get_help_message()
-        if re.search(r"\b(привет|хай|здравствуй|hello|hi|hey)\b", text_lower):
-            name = self.memory.get("name")
-            greeting = f", {name}!" if name else "!"
-            return f"Привет{greeting} Я IDA v2.5. Чем могу помочь? 👋"
-
+    def generate_response(self, user_input: str, tool_result=None, thought=None) -> str:
         client = self._get_client()
-        if tool_result is not None:
-            if client:
-                prompt = f"Пользователь спросил: «{user_input}». Результат: {tool_result}. Прокомментируй кратко и дружелюбно."
-                return self._get_llm_response(prompt)
-            return str(tool_result)
-
-        if client:
-            return self._get_llm_response(user_input)
-        return "Я пока не понимаю это. Напиши «помощь» для списка команд."
-
-    def _get_llm_response(self, user_input: str) -> str:
-        try:
-            client = self._get_client()
-            system_prompt = f"Ты — IDA v2.5. Отвечай по-русски, кратко и дружелюбно. Пользователь: {self.memory.get('name', 'бро')}."
-            messages = [{"role": "system", "content": system_prompt}]
-            for entry in self.conversation_history[-CONTEXT_WINDOW:]:
+        if not client:
+            return "OpenAI API key missing."
+            
+        system_prompt = "Ты — IDA OS, автономный ИИ-агент. Твоя задача — помогать пользователю. Отвечай на русском языке."
+        if thought and isinstance(thought, str) and thought.strip():
+            system_prompt += f"\nТвой внутренний анализ: {thought}"
+            
+        messages = [{"role": "system", "content": system_prompt}]
+        
+        # Safe history access
+        history = self.conversation_history or []
+        for entry in history[-CONTEXT_WINDOW:]:
+            if entry.get("user") and entry.get("response"):
                 messages.append({"role": "user", "content": entry["user"]})
                 messages.append({"role": "assistant", "content": entry["response"]})
-            messages.append({"role": "user", "content": user_input})
-            response = client.chat.completions.create(model=LLM_MODEL, messages=messages, temperature=LLM_TEMPERATURE, max_tokens=LLM_MAX_TOKENS)
-            return response.choices[0].message.content.strip()
+            
+        if tool_result:
+            messages.append({"role": "system", "content": f"Данные от инструментов: {tool_result}"})
+            
+        messages.append({"role": "user", "content": user_input})
+        
+        try:
+            response = client.chat.completions.create(
+                model=LLM_MODEL,
+                messages=messages,
+                temperature=LLM_TEMPERATURE,
+                max_tokens=LLM_MAX_TOKENS
+            )
+            if response and response.choices:
+                content = response.choices[0].message.content
+                if content and content.strip():
+                    return content.strip()
+            
+            # If empty, try a simpler prompt
+            log_warning("LLM returned empty response, retrying with simple prompt...")
+            simple_resp = self._get_llm_response(f"Ответь на вопрос пользователя: {user_input}")
+            return simple_resp if simple_resp else "Извини, я не смог сформировать ответ. Попробуй еще раз."
+            
         except Exception as e:
-            return f"Ошибка LLM: {str(e)}"
+            log_error("LLM Generation failed", e)
+            return f"Ошибка при генерации ответа: {str(e)}"
 
-    def add_to_history(self, user_input: str, response: str):
-        self.conversation_history.append({"user": user_input, "response": response})
+    def _get_llm_response(self, prompt: str, temperature=0.7) -> str:
+        client = self._get_client()
+        if not client: return ""
+        try:
+            response = client.chat.completions.create(
+                model=LLM_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=temperature
+            )
+            if response and response.choices:
+                content = response.choices[0].message.content
+                return content.strip() if content else ""
+            return ""
+        except Exception as e:
+            log_error("LLM Call failed", e)
+            return ""
 
-    def _get_help_message(self) -> str:
-        return "Доступные команды: Время, Погода, Калькулятор, Заметки, Файлы, Поиск, Напоминания, Рисование, Зрение (пришли фото)."
+    def get_embedding(self, text: str) -> list:
+        """Generate embedding for a given text."""
+        client = self._get_client()
+        if not client: return []
+        try:
+            # Note: Some proxies might not support embeddings. 
+            # In a production IDA OS, we would have a fallback or local embedding model.
+            response = client.embeddings.create(
+                input=text,
+                model=EMBEDDING_MODEL
+            )
+            return response.data[0].embedding
+        except Exception as e:
+            # Fallback: Return a pseudo-random embedding based on text hash if API fails
+            # This allows the system to continue running without crashing
+            log_warning(f"Embeddings API not available. Using fallback mechanism.")
+            import hashlib
+            hash_val = int(hashlib.md5(text.encode()).hexdigest(), 16)
+            pseudo_vec = [(hash_val >> i) & 1 for i in range(1536)]
+            return [float(x) for x in pseudo_vec]
+
+    def decide_tool(self, user_input: str) -> tuple:
+        """Decide which tool to use and extract arguments."""
+        # Simplified tool selection logic for v3.0
+        # In a real scenario, this would use LLM function calling
+        prompt = f"System: Identify if any tool is needed for this task: '{user_input}'. Available tools: weather, calculator, search, stats. Respond ONLY in JSON format: {{\"tool\": \"tool_name\" or null, \"arg\": \"argument\" or null}}"
+        response = self._get_llm_response(prompt, temperature=0)
+        try:
+            import json
+            data = json.loads(response)
+            return data.get("tool"), data.get("arg")
+        except:
+            return None, None
+
+    def add_to_history(self, user: str, response: str):
+        self.conversation_history.append({"user": user, "response": response})

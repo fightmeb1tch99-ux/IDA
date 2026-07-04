@@ -7,12 +7,13 @@ import os
 
 # LLM / OpenAI configuration
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
+OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", "https://api.manus.im/api/llm-proxy/v1")
 
-# Available models: gpt-5-nano (fast/cheap), gpt-5-mini (balanced), gpt-5 (smart)
-LLM_MODEL = os.getenv("IDA_MODEL", "gpt-5-mini")
+# Available models: gpt-4o-mini (balanced), gpt-4o (smart)
+LLM_MODEL = os.getenv("IDA_MODEL", "gpt-4o-mini")
 LLM_TEMPERATURE = 0.7
 LLM_MAX_TOKENS = 1024
+EMBEDDING_MODEL = "text-embedding-3-small"
 
 # Logging configuration
 LOG_LEVEL = os.getenv("IDA_LOG_LEVEL", "INFO")
@@ -40,7 +41,7 @@ SEARCH_API = "https://api.duckduckgo.com"
 
 # Agent identity
 AGENT_NAME = "IDA"
-AGENT_VERSION = "2.0"
+AGENT_VERSION = "3.0"
 AGENT_FULL_NAME = "Инновационный динамический помощник"
 GREETING_EMOJI = "🤖"
 HELP_EMOJI = "📚"

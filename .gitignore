@@ -26,6 +26,10 @@ logs/
 
 # Memory backups (keep memory.json, ignore backups)
 memory/backups/
+memory/ida_os.db
+memory/vector/embeddings.json
+memory/notes.json
+memory/memory.json
 
 # Created files
 created_files/

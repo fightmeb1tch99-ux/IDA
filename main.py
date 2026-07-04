@@ -1,15 +1,15 @@
 """
-IDA AI Agent v2.0 — Main entry point.
-Инновационный динамический помощник.
+IDA OS v3.0 — Main entry point.
+Autonomous AI Operating System with Multi-Agent Orchestration.
 """
-
 import sys
 import os
+import asyncio
 
 from logger import log_info, log_error, log_warning, log_debug
 from brain import Brain
 from memory_manager import MemoryManager
-from tools.tools import TOOLS
+from core.orchestrator import Orchestrator
 
 # Claude Code style colors
 class Colors:
@@ -30,137 +30,82 @@ ASCII_LOGO = f"""
   ██║██║  ██║██╔══██║
   ██║██████╔╝██║  ██║
   ╚═╝╚═════╝ ╚═╝  ╚═╝
-{Colors.END}{Colors.GRAY}  Инновационный Динамический Помощник v2.0{Colors.END}
+{Colors.END}{Colors.GRAY}  IDA OS v3.0 | Production-Grade AI Agent{Colors.END}
 """
 
-class AIAgent:
-    """Main AI Agent orchestrator."""
+class IDAOS:
+    """Main IDA OS Controller."""
 
     def __init__(self):
-        log_info("Initializing IDA AI Agent v2.0...")
+        log_info("Initializing IDA OS v3.0...")
+        # Initialize Memory First
         self.memory_manager = MemoryManager()
+        # Initialize Brain with memory access
         self.brain = Brain(self.memory_manager.memory)
-        log_info("IDA AI Agent initialized successfully")
+        # Link Brain back to memory for embeddings
+        self.memory_manager.brain = self.brain
+        # Initialize Orchestrator
+        self.orchestrator = Orchestrator(self.brain, self.memory_manager)
+        log_info("IDA OS initialized successfully")
 
-    def process_input(self, user_input: str) -> str:
-        """Process user input and return a response."""
+    async def process_input(self, user_input: str) -> str:
+        """Process user input through the Orchestrator."""
         if not user_input or not isinstance(user_input, str):
             return f"{Colors.RED}Ошибка: некорректный ввод{Colors.END}"
+        
         user_input = user_input.strip()
         if not user_input:
             return f"{Colors.YELLOW}Пожалуйста, напиши что-нибудь{Colors.END}"
-        if len(user_input) > 4096:
-            return f"{Colors.RED}Ошибка: сообщение слишком длинное{Colors.END}"
 
-        log_debug(f"Processing: {user_input[:80]}")
+        log_debug(f"OS Processing: {user_input[:80]}")
+        
+        try:
+            response = await self.orchestrator.run(user_input)
+            return response
+        except Exception as e:
+            log_error("Orchestrator execution failed", e)
+            return f"{Colors.RED}Ошибка ядра ОС: {str(e)}{Colors.END}"
 
-        # Decide tool
-        tool_name, arg = self.brain.decide_tool(user_input)
-        tool_result = None
-
-        if tool_name:
-            if tool_name == "stats":
-                stats = self.memory_manager.get_stats()
-                lines = [f"{Colors.BOLD}Статистика IDA:{Colors.END}"]
-                for k, v in stats.items():
-                    lines.append(f"  {Colors.GRAY}{k}:{Colors.END} {v}")
-                tool_result = "\n".join(lines)
-            elif tool_name in TOOLS:
-                try:
-                    tool_fn = TOOLS[tool_name]
-                    tool_result = tool_fn(arg) if arg is not None else tool_fn()
-                    log_info(f"Tool executed: {tool_name}")
-                except Exception as e:
-                    log_error(f"Tool execution failed: {tool_name}", e)
-                    tool_result = f"{Colors.RED}Ошибка инструмента: {str(e)}{Colors.END}"
-
-        response = self.brain.generate_response(user_input, tool_result)
-        self.brain.add_to_history(user_input, response)
-        self.memory_manager.increment_interactions()
-        self.memory_manager.save()
-        return response
-
-    def run_interactive(self):
-        """Run the agent in interactive (REPL) mode."""
+    async def run_interactive(self):
+        """Run the OS in interactive (REPL) mode."""
         print(ASCII_LOGO)
-        print(f"{Colors.GRAY}Напиши {Colors.END}{Colors.BOLD}«помощь»{Colors.END}{Colors.GRAY} для списка команд{Colors.END}")
-        print(f"{Colors.GRAY}Напиши {Colors.END}{Colors.BOLD}«выход»{Colors.END}{Colors.GRAY} для завершения{Colors.END}")
+        print(f"{Colors.GRAY}IDA OS v3.0 готова к работе. Режим: Multi-Agent Orchestration.{Colors.END}")
+        print(f"{Colors.GRAY}Напиши «выход» для завершения.{Colors.END}")
         print()
-        log_info("IDA started in interactive mode")
 
         try:
             while True:
                 try:
-                    # Claude-like prompt
                     user_input = input(f"{Colors.CYAN}{Colors.BOLD}╭─ Ты{Colors.END}\n{Colors.CYAN}{Colors.BOLD}╰─> {Colors.END}").strip()
                     
                     if not user_input:
                         continue
-                    if user_input.lower() in ("выход", "quit", "exit", "bye", "пока"):
-                        print(f"\n{Colors.GRAY}IDA: До свидания! 👋{Colors.END}")
-                        log_info("User exited")
+                    if user_input.lower() in ("выход", "quit", "exit", "bye"):
+                        print(f"\n{Colors.GRAY}IDA OS: Завершение работы... 👋{Colors.END}")
                         break
                     
-                    response = self.process_input(user_input)
+                    response = await self.process_input(user_input)
                     
-                    # Claude-like response styling
-                    print(f"\n{Colors.GREEN}{Colors.BOLD}IDA{Colors.END}")
+                    print(f"\n{Colors.GREEN}{Colors.BOLD}IDA OS{Colors.END}")
                     print(f"{response}\n")
                     
                 except KeyboardInterrupt:
-                    print(f"\n\n{Colors.GRAY}IDA: До встречи! 👋{Colors.END}")
-                    log_warning("Interrupted by user")
+                    print(f"\n\n{Colors.GRAY}IDA OS: До встречи! 👋{Colors.END}")
                     break
                 except Exception as e:
                     log_error("Interactive loop error", e)
-                    print(f"{Colors.RED}IDA: Произошла ошибка: {str(e)}{Colors.END}\n")
+                    print(f"{Colors.RED}IDA OS: Произошла ошибка: {str(e)}{Colors.END}\n")
         finally:
-            self._save_and_exit()
-
-    def run_single(self, user_input: str) -> str:
-        """Process a single input (non-interactive mode)."""
-        response = self.process_input(user_input)
-        print(f"{Colors.GREEN}{Colors.BOLD}IDA:{Colors.END} {response}")
-        self.memory_manager.save()
-        return response
-
-    def show_stats(self):
-        """Print memory statistics."""
-        stats = self.memory_manager.get_stats()
-        print(f"\n{Colors.BOLD}Статистика IDA:{Colors.END}")
-        for key, value in stats.items():
-            print(f"  {Colors.GRAY}{key}:{Colors.END} {value}")
-        print()
-
-    def show_help(self):
-        """Print help message."""
-        print(self.brain.generate_response("помощь"))
-
-    def _save_and_exit(self):
-        try:
             self.memory_manager.save()
-            log_info("Memory saved on exit")
-        except Exception as e:
-            log_error("Failed to save memory on exit", e)
 
-def main():
-    agent = AIAgent()
+async def main():
+    os_instance = IDAOS()
     if len(sys.argv) > 1:
-        arg = sys.argv[1]
-        if arg in ("--help", "-h"):
-            agent.show_help()
-        elif arg == "--stats":
-            agent.show_stats()
-        elif arg == "--input":
-            if len(sys.argv) > 2:
-                agent.run_single(" ".join(sys.argv[2:]))
-            else:
-                print("Ошибка: --input требует аргумент")
-                sys.exit(1)
-        else:
-            agent.run_single(" ".join(sys.argv[1:]))
+        user_input = " ".join(sys.argv[1:])
+        response = await os_instance.process_input(user_input)
+        print(f"{Colors.GREEN}{Colors.BOLD}IDA OS:{Colors.END} {response}")
     else:
-        agent.run_interactive()
+        await os_instance.run_interactive()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

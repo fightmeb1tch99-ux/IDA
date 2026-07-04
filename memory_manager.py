@@ -1,26 +1,35 @@
+"""
+Memory Manager for IDA OS v3.0
+Integrates SQLite for structured data and VectorStorage for semantic search.
+Maintains backward compatibility for basic memory functions.
+"""
 import json
 import os
 from pathlib import Path
 from datetime import datetime
+from memory.database import DatabaseManager
+from memory.vector_storage import VectorStorage
 from logger import log_info, log_error, log_debug
 
-
 class MemoryManager:
-    """Manages agent memory with persistence and backup."""
+    """Manages agent memory with persistence, SQLite, and Vector Search."""
     
-    def __init__(self, memory_file="memory/memory.json"):
+    def __init__(self, memory_file="memory/memory.json", brain=None):
         self.memory_file = memory_file
         self.backup_dir = Path("memory/backups")
         self.backup_dir.mkdir(parents=True, exist_ok=True)
-        self.memory = self.load()
-    
-    def load(self):
-        """
-        Load memory from file.
+        self.brain = brain
         
-        Returns:
-            dict: Memory dictionary
-        """
+        # New v3.0 storage systems
+        self.db = DatabaseManager()
+        self.vector = VectorStorage()
+        
+        # Legacy JSON memory for simple key-value storage
+        self.memory = self.load()
+        log_info("MemoryManager v3.0 initialized")
+
+    def load(self):
+        """Load legacy JSON memory from file."""
         if not os.path.exists(self.memory_file):
             log_debug("Memory file not found, creating new memory")
             return self._initialize_memory()
@@ -30,73 +39,39 @@ class MemoryManager:
                 memory = json.load(f)
             log_info(f"Memory loaded from {self.memory_file}")
             return memory
-        except json.JSONDecodeError as e:
-            log_error(f"Failed to parse memory file", e)
-            return self._initialize_memory()
         except Exception as e:
             log_error(f"Failed to load memory", e)
             return self._initialize_memory()
-    
+
     def save(self):
-        """
-        Save memory to file with backup.
-        
-        Returns:
-            bool: True if successful, False otherwise
-        """
+        """Save legacy JSON memory to file with backup."""
         try:
-            # Create backup before saving
             self._create_backup()
-            
-            # Ensure directory exists
             os.makedirs(os.path.dirname(self.memory_file), exist_ok=True)
-            
-            # Save memory
             with open(self.memory_file, "w", encoding="utf-8") as f:
                 json.dump(self.memory, f, indent=2, ensure_ascii=False)
-            
-            log_info(f"Memory saved to {self.memory_file}")
             return True
         except Exception as e:
             log_error(f"Failed to save memory", e)
             return False
-    
+
     def _create_backup(self):
         """Create a backup of current memory file."""
         if not os.path.exists(self.memory_file):
             return
-        
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             backup_file = self.backup_dir / f"memory_backup_{timestamp}.json"
-            
             with open(self.memory_file, "r", encoding="utf-8") as f:
                 backup_data = json.load(f)
-            
             with open(backup_file, "w", encoding="utf-8") as f:
                 json.dump(backup_data, f, indent=2, ensure_ascii=False)
-            
-            log_debug(f"Backup created: {backup_file}")
-            
-            # Keep only last 10 backups
-            self._cleanup_old_backups()
         except Exception as e:
             log_error(f"Failed to create backup", e)
-    
-    def _cleanup_old_backups(self, keep_count=10):
-        """Remove old backup files, keeping only the most recent ones."""
-        try:
-            backups = sorted(self.backup_dir.glob("memory_backup_*.json"))
-            if len(backups) > keep_count:
-                for old_backup in backups[:-keep_count]:
-                    old_backup.unlink()
-                    log_debug(f"Removed old backup: {old_backup}")
-        except Exception as e:
-            log_error(f"Failed to cleanup old backups", e)
-    
+
     def _initialize_memory(self):
         """Initialize new memory structure."""
-        memory = {
+        return {
             "name": None,
             "created_at": datetime.now().isoformat(),
             "last_updated": datetime.now().isoformat(),
@@ -104,44 +79,58 @@ class MemoryManager:
             "preferences": {},
             "custom_data": {}
         }
-        log_info("New memory initialized")
-        return memory
-    
+
+    # --- v3.0 Enhanced Memory Features ---
+
+    def save_interaction(self, user_input, response, thought="", metadata=None):
+        """Save interaction to both SQLite and Vector Storage."""
+        # Save to SQLite
+        self.db.add_interaction(user_input, response, thought, metadata)
+        
+        # Save to Vector Storage for semantic search
+        if self.brain:
+            text_to_embed = f"User: {user_input}\nIDA: {response}"
+            embedding = self.brain.get_embedding(text_to_embed)
+            if embedding:
+                self.vector.add_text(text_to_embed, embedding, {
+                    "timestamp": datetime.now().isoformat(),
+                    "type": "interaction"
+                })
+        
+        # Legacy increment
+        self.increment_interactions()
+        self.save()
+
+    def search_memory(self, query, top_k=3):
+        """Search memory semantically."""
+        if not self.brain:
+            return []
+        query_embedding = self.brain.get_embedding(query)
+        if not query_embedding:
+            return []
+        return self.vector.search(query_embedding, top_k)
+
+    def get_context(self, query=None):
+        """Get recent history and relevant semantic context."""
+        recent = self.db.get_recent_history(limit=5)
+        semantic = []
+        if query:
+            semantic = self.search_memory(query, top_k=2)
+            
+        return {
+            "recent_history": recent,
+            "semantic_context": [s["text"] for s in semantic]
+        }
+
+    # --- Legacy Compatibility Methods ---
     def get(self, key, default=None):
-        """Get value from memory."""
         return self.memory.get(key, default)
     
     def set(self, key, value):
-        """Set value in memory."""
         self.memory[key] = value
         self.memory["last_updated"] = datetime.now().isoformat()
-        log_debug(f"Memory updated: {key} = {value}")
-    
-    def update(self, data):
-        """Update memory with multiple values."""
-        self.memory.update(data)
-        self.memory["last_updated"] = datetime.now().isoformat()
-        log_debug(f"Memory updated with {len(data)} items")
-    
-    def increment_interactions(self):
-        """Increment interaction counter."""
-        count = self.memory.get("interactions_count", 0)
-        self.memory["interactions_count"] = count + 1
-    
-    def get_stats(self):
-        """Get memory statistics."""
-        return {
-            "name": self.memory.get("name"),
-            "created_at": self.memory.get("created_at"),
-            "last_updated": self.memory.get("last_updated"),
-            "interactions_count": self.memory.get("interactions_count", 0),
-        }
-    
-    def clear(self):
-        """Clear all memory (with confirmation)."""
-        log_info("Memory cleared")
-        self.memory = self._initialize_memory()
         self.save()
     
-    def __repr__(self):
-        return f"MemoryManager({self.memory_file})"
+    def increment_interactions(self):
+        count = self.memory.get("interactions_count", 0)
+        self.memory["interactions_count"] = count + 1
