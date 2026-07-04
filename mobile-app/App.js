@@ -10,8 +10,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
+  Modal,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import VoiceAssistant from './VoiceAssistant';
 
 const COLORS = {
   primary: '#0a7ea4',
@@ -33,18 +35,26 @@ export default function App() {
   ]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showVoiceModal, setShowVoiceModal] = useState(false);
   const flatListRef = useRef(null);
 
   useEffect(() => {
     flatListRef.current?.scrollToEnd({ animated: true });
   }, [messages]);
 
-  const handleSendMessage = async () => {
-    if (!inputText.trim()) return;
+  const handleVoiceInput = (text) => {
+    setInputText(text);
+    setShowVoiceModal(false);
+    setTimeout(() => handleSendMessage(text), 300);
+  };
+
+  const handleSendMessage = async (messageText = null) => {
+    const textToSend = messageText || inputText;
+    if (!textToSend.trim()) return;
 
     const userMessage = {
       id: Date.now().toString(),
-      content: inputText,
+      content: textToSend,
       role: 'user',
       timestamp: new Date(),
     };
@@ -68,11 +78,11 @@ export default function App() {
           messages: [
             {
               role: 'system',
-              content: 'Ты IDA - Инновационный динамический помощник v 0.1 - умный AI ассистент. Отвечай на русском языке кратко и дружелюбно.',
+              content: 'Ты IDA - Инновационный динамический помощник. Отвечай на русском языке кратко и дружелюбно.',
             },
             {
               role: 'user',
-              content: inputText,
+              content: textToSend,
             },
           ],
           temperature: 0.7,
@@ -173,11 +183,17 @@ export default function App() {
             maxLength={1000}
           />
           <TouchableOpacity
+            style={styles.voiceButton}
+            onPress={() => setShowVoiceModal(true)}
+          >
+            <MaterialIcons name="mic" size={20} color={COLORS.background} />
+          </TouchableOpacity>
+          <TouchableOpacity
             style={[
               styles.sendButton,
               (isLoading || !inputText.trim()) && styles.sendButtonDisabled,
             ]}
-            onPress={handleSendMessage}
+            onPress={() => handleSendMessage()}
             disabled={isLoading || !inputText.trim()}
           >
             {isLoading ? (
@@ -187,6 +203,26 @@ export default function App() {
             )}
           </TouchableOpacity>
         </View>
+
+        {/* Voice Modal */}
+        <Modal
+          visible={showVoiceModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowVoiceModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <VoiceAssistant onVoiceInput={handleVoiceInput} />
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowVoiceModal(false)}
+              >
+                <Text style={styles.closeButtonText}>Закрыть</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -292,5 +328,40 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: {
     opacity: 0.5,
+  },
+  voiceButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.muted,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    backgroundColor: COLORS.background,
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  closeButton: {
+    marginTop: 20,
+    paddingHorizontal: 30,
+    paddingVertical: 10,
+    backgroundColor: COLORS.primary,
+    borderRadius: 8,
+  },
+  closeButtonText: {
+    color: COLORS.background,
+    fontWeight: '600',
   },
 });
