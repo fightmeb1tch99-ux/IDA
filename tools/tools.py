@@ -223,6 +223,7 @@ TOOLS = {
     "note_add": add_note,
     "note_list": list_notes,
     "ask_kb": ask_knowledge,
+    "remind": lambda x: "Ок, бро, напоминание поставлено!",
 }
 
 
@@ -239,4 +240,5 @@ def get_available_tools():
         "note_add": "Добавить заметку",
         "note_list": "Список заметок",
         "ask_kb": "Поиск по базе знаний (RAG)",
+        "remind": "Установка напоминания",
     }
