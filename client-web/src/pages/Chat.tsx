@@ -12,6 +12,7 @@ interface Message {
   sender: 'user' | 'assistant';
   timestamp: Date;
   error?: boolean;
+  isStreaming?: boolean;
 }
 
 export default function Chat() {
@@ -27,6 +28,7 @@ export default function Chat() {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const sendMessageMutation = trpc.chat.sendMessage.useMutation();
+  const streamingRef = useRef<AbortController | null>(null);
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -38,51 +40,27 @@ export default function Chat() {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = async () => {
-    if (!inputText.trim()) return;
-    if (isLoading) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text: inputText,
-      sender: 'user',
-      timestamp: new Date(),
-    };
-
-    const userInput = inputText;
-    setMessages((prev) => [...prev, userMessage]);
-    setInputText('');
-    setIsLoading(true);
-
+  const handleStreamingResponse = async (userInput: string, conversationHistory: any[]) => {
     try {
-      // Build conversation history
-      const conversationHistory = messages
-        .map(m => ({
-          role: m.sender === 'user' ? 'user' as const : 'assistant' as const,
-          content: m.text,
-        }));
-
-      // Send message to API
+      // First, send the message normally to get streaming
       const result = await sendMessageMutation.mutateAsync({
         message: userInput,
         conversationHistory,
       });
 
-      if (!result.response) {
-        throw new Error('Empty response from server');
+      // If streaming not available, use regular response
+      if (result.response) {
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: result.response,
+          sender: 'assistant',
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+        toast.success('✓ Ответ получен');
       }
-
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: result.response,
-        sender: 'assistant',
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-      toast.success('✓ Ответ получен');
     } catch (error) {
-      console.error('Chat error:', error);
+      console.error('Streaming error:', error);
       
       let errorText = 'Ошибка подключения';
       if (error instanceof Error) {
@@ -109,6 +87,120 @@ export default function Chat() {
         error: true,
       };
       setMessages((prev) => [...prev, errorMessage]);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!inputText.trim()) return;
+    if (isLoading) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: inputText,
+      sender: 'user',
+      timestamp: new Date(),
+    };
+
+    const userInput = inputText;
+    setMessages((prev) => [...prev, userMessage]);
+    setInputText('');
+    setIsLoading(true);
+
+    // Add streaming message placeholder
+    const streamingMessageId = (Date.now() + 1).toString();
+    const streamingMessage: Message = {
+      id: streamingMessageId,
+      text: '',
+      sender: 'assistant',
+      timestamp: new Date(),
+      isStreaming: true,
+    };
+    setMessages((prev) => [...prev, streamingMessage]);
+
+    try {
+      // Build conversation history
+      const conversationHistory = messages
+        .filter(m => m.id !== streamingMessageId)
+        .map(m => ({
+          role: m.sender === 'user' ? 'user' as const : 'assistant' as const,
+          content: m.text,
+        }));
+
+      // Simulate streaming by fetching response and updating character by character
+      const result = await sendMessageMutation.mutateAsync({
+        message: userInput,
+        conversationHistory,
+      });
+
+      if (!result.response) {
+        throw new Error('Empty response from server');
+      }
+
+      // Simulate streaming effect - display text character by character
+      const response = result.response;
+      let displayedText = '';
+      
+      for (let i = 0; i < response.length; i++) {
+        displayedText += response[i];
+        
+        // Update message with streaming text
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === streamingMessageId
+              ? { ...msg, text: displayedText, isStreaming: i < response.length - 1 }
+              : msg
+          )
+        );
+
+        // Add small delay for streaming effect (10ms per character)
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+
+      // Mark as finished streaming
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === streamingMessageId
+            ? { ...msg, isStreaming: false }
+            : msg
+        )
+      );
+
+      toast.success('✓ Ответ получен');
+    } catch (error) {
+      console.error('Chat error:', error);
+      
+      let errorText = 'Ошибка подключения';
+      if (error instanceof Error) {
+        if (error.message.includes('OPENAI_API_KEY')) {
+          errorText = 'OpenAI API ключ не настроен. Свяжитесь с администратором.';
+        } else if (error.message.includes('401')) {
+          errorText = 'Неверный OpenAI API ключ.';
+        } else if (error.message.includes('429')) {
+          errorText = 'Слишком много запросов. Попробуй позже.';
+        } else if (error.message.includes('timeout')) {
+          errorText = 'Соединение истекло. Проверь интернет.';
+        } else {
+          errorText = error.message;
+        }
+      }
+
+      toast.error(`❌ ${errorText}`);
+      
+      // Replace streaming message with error
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === streamingMessageId
+            ? {
+                id: msg.id,
+                text: `Ошибка: ${errorText}`,
+                sender: 'assistant',
+                timestamp: new Date(),
+                error: true,
+                isStreaming: false,
+              }
+            : msg
+        )
+      );
     } finally {
       setIsLoading(false);
     }
@@ -137,7 +229,8 @@ export default function Chat() {
               <div className="flex items-start gap-2">
                 {message.error && <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-red-500" />}
                 <div className="flex-1">
-                  <p className="text-sm break-words">{message.text}</p>
+                  <p className="text-sm break-words whitespace-pre-wrap">{message.text}</p>
+                  {message.isStreaming && <span className="inline-block w-2 h-4 bg-current ml-1 animate-pulse" />}
                   <p className={`text-xs mt-2 ${
                     message.sender === 'user' ? 'opacity-70' : 'text-muted-foreground'
                   }`}>
@@ -148,16 +241,6 @@ export default function Chat() {
             </Card>
           </div>
         ))}
-        {isLoading && (
-          <div className="flex justify-start animate-slideIn">
-            <Card className="card-cyber p-3 sm:p-4">
-              <div className="flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-primary flex-shrink-0" />
-                <span className="text-sm text-muted-foreground">IDA думает...</span>
-              </div>
-            </Card>
-          </div>
-        )}
         <div ref={messagesEndRef} />
       </div>
 
