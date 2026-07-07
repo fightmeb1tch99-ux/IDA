@@ -1,4 +1,4 @@
-# 🤖 AI IDA v3.6 — Киберпанк AI Dashboard
+# 🤖 AI IDA v3.6 — IDA AI Dashboard
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue?logo=python)](https://python.org)
 [![React](https://img.shields.io/badge/React-19-blue?logo=react)](https://react.dev)
