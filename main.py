@@ -10,6 +10,7 @@ from logger import log_info, log_error, log_warning, log_debug
 from brain import Brain
 from memory_manager import MemoryManager
 from tools.tools import TOOLS
+from ui import DonutLoader, CodeEditor, TermuxUI
 
 # Claude Code style colors
 class Colors:
@@ -38,6 +39,7 @@ class AIAgent:
 
     def __init__(self):
         log_info("Initializing IDA AI Agent v2.0...")
+        DonutLoader.show_loading("Инициализация IDA", 2.0)
         self.memory_manager = MemoryManager()
         self.brain = Brain(self.memory_manager.memory)
         log_info("IDA AI Agent initialized successfully")
@@ -100,6 +102,12 @@ class AIAgent:
                         print(f"\n{Colors.GRAY}IDA: До свидания! 👋{Colors.END}")
                         log_info("User exited")
                         break
+                    if user_input.lower() in ("редактор", "editor", "код", "code"):
+                        print(f"\n{Colors.YELLOW}Открываю редактор кода...{Colors.END}")
+                        DonutLoader.show_loading("Инициализация редактора", 1.5)
+                        editor = CodeEditor("my_code.py")
+                        editor.run_editor()
+                        continue
                     
                     response = self.process_input(user_input)
                     
