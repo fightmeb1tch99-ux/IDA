@@ -12,6 +12,12 @@ try:
 except ImportError:
     _openai_available = False
 
+try:
+    from groq import Groq
+    _groq_available = True
+except ImportError:
+    _groq_available = False
+
 from logger import log_info, log_error, log_debug, log_warning
 from config import (
     LLM_MODEL, LLM_TEMPERATURE, LLM_MAX_TOKENS,
@@ -106,8 +112,22 @@ class Brain:
         self.conversation_history = []
         self.parser = CommandParser()
         self.client = None
+        self.groq_client = None
+        self.use_groq = False
 
-        if _openai_available:
+        # Try Groq first (free and fast)
+        groq_key = os.getenv("GROQ_API_KEY", "")
+        if _groq_available and groq_key:
+            try:
+                self.groq_client = Groq(api_key=groq_key)
+                self.use_groq = True
+                log_info("Groq client initialized (free LLM)")
+            except Exception as e:
+                log_error("Failed to initialize Groq client", e)
+                self.use_groq = False
+
+        # Fallback to OpenAI
+        if not self.use_groq and _openai_available:
             api_key = OPENAI_API_KEY or os.getenv("OPENAI_API_KEY", "")
             api_base = OPENAI_API_BASE or os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
             if api_key:
@@ -117,7 +137,7 @@ class Brain:
                 except Exception as e:
                     log_error("Failed to initialize OpenAI client", e)
             else:
-                log_warning("OPENAI_API_KEY not set — using rule-based fallback")
+                log_warning("No LLM API keys set — using rule-based fallback")
 
     def decide_tool(self, text: str):
         return self.parser.parse(text)
@@ -179,12 +199,25 @@ class Brain:
                 messages.append({"role": "assistant", "content": entry["response"]})
             messages.append({"role": "user", "content": user_input})
 
-            response = self.client.chat.completions.create(
-                model=LLM_MODEL,
-                messages=messages,
-                temperature=LLM_TEMPERATURE,
-                max_tokens=LLM_MAX_TOKENS,
-            )
+            # Use Groq if available
+            if self.use_groq and self.groq_client:
+                response = self.groq_client.chat.completions.create(
+                    model="mixtral-8x7b-32768",
+                    messages=messages,
+                    temperature=0.7,
+                    max_tokens=1024,
+                )
+            # Fallback to OpenAI
+            elif self.client:
+                response = self.client.chat.completions.create(
+                    model=LLM_MODEL,
+                    messages=messages,
+                    temperature=LLM_TEMPERATURE,
+                    max_tokens=LLM_MAX_TOKENS,
+                )
+            else:
+                return "Нет доступных LLM сервисов."
+            
             if response and response.choices:
                 return response.choices[0].message.content.strip()
             return "Извини, не смог получить ответ."
