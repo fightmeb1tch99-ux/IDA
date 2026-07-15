@@ -48,7 +48,7 @@ export async function registerUser(email: string, password: string, name: string
   return { email, name };
 }
 
-export async function loginUser(email: string, password: string) {
+export async function loginUser(email: string, _password: string) {
   const db = await getDb();
   if (!db) throw new Error('Database not available');
 
@@ -62,11 +62,11 @@ export async function loginUser(email: string, password: string) {
     throw new Error('User not found');
   }
 
-  // В реальном приложении здесь должна быть проверка пароля
-  // Для демо просто проверяем что пароль не пустой
-  if (!password) {
-    throw new Error('Invalid password');
-  }
-
-  return user[0];
+  // SECURITY: this project has no stored password/credential column, so there
+  // is nothing to verify a password against. Previously this function returned
+  // the user for ANY non-empty password, which is an authentication bypass.
+  // Password-based login must not be used until a hashed-credential column and
+  // a constant-time verification step are implemented; authentication goes
+  // through Manus OAuth instead.
+  throw new Error('Password login is not supported; use OAuth');
 }

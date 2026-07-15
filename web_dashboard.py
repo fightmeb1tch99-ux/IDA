@@ -14,18 +14,33 @@ from memory_manager import MemoryManager
 from brain import Brain
 from tools.tools import TOOLS
 from logger import log_info, log_error
+from config import MAX_INPUT_LENGTH
 
 load_dotenv()
+
+# Maximum accepted length for an incoming chat message (chars).
+MAX_MESSAGE_LENGTH = MAX_INPUT_LENGTH
 
 app = FastAPI(title="IDA Web Chat")
 
 # CORS
+# Restrict origins to an explicit allow-list. A wildcard ("*") combined with
+# allow_credentials=True is rejected by browsers and, more importantly, would
+# let any site issue credentialed cross-origin requests. Configure additional
+# origins via the IDA_ALLOWED_ORIGINS env var (comma-separated).
+_default_origins = "http://localhost:8000,http://localhost:3000"
+ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.getenv("IDA_ALLOWED_ORIGINS", _default_origins).split(",")
+    if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 # Initialize IDA
@@ -53,9 +68,14 @@ async def chat_interface():
 async def chat(request: dict):
     """Process chat messages and return responses."""
     try:
-        message = request.get("message", "").strip()
+        raw_message = request.get("message", "")
+        if not isinstance(raw_message, str):
+            return {"error": "Некорректный формат сообщения"}
+        message = raw_message.strip()
         if not message:
             return {"error": "Сообщение не может быть пустым"}
+        if len(message) > MAX_MESSAGE_LENGTH:
+            return {"error": f"Сообщение слишком длинное (макс. {MAX_MESSAGE_LENGTH} символов)"}
 
         log_info(f"Web Chat: {message}")
 
