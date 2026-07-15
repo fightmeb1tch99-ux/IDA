@@ -101,11 +101,23 @@ class OllamaProvider(OpenAICompatibleProvider):
     """Local Ollama server exposed through its OpenAI-compatible endpoint.
 
     Ollama needs no real API key, so a placeholder is used and the base URL
-    defaults to the local daemon unless overridden by config/env.
+    defaults to the local daemon. The default is pinned here (rather than
+    inherited via the shared ``OPENAI_API_BASE`` resolution) so a globally
+    configured OpenAI endpoint never silently redirects local Ollama traffic.
     """
 
     name = "ollama"
     default_api_base = "http://localhost:11434/v1"
 
-    def __init__(self, *, api_key: Optional[str] = None, **kwargs):
-        super().__init__(api_key=api_key or "ollama", **kwargs)
+    def __init__(
+        self,
+        *,
+        api_key: Optional[str] = None,
+        api_base: Optional[str] = None,
+        **kwargs,
+    ):
+        super().__init__(
+            api_key=api_key or "ollama",
+            api_base=api_base or os.getenv("OLLAMA_API_BASE") or self.default_api_base,
+            **kwargs,
+        )

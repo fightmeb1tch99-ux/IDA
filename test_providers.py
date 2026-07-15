@@ -119,3 +119,14 @@ class TestOllamaProvider:
         provider = OllamaProvider()
         assert provider.api_key == "ollama"
         assert provider.api_base == "http://localhost:11434/v1"
+
+    def test_openai_base_env_does_not_override_localhost(self, monkeypatch):
+        # A globally configured OpenAI endpoint must not hijack local Ollama.
+        monkeypatch.setenv("OPENAI_API_BASE", "https://api.openai.com/v1")
+        provider = OllamaProvider()
+        assert provider.api_base == "http://localhost:11434/v1"
+
+    def test_explicit_ollama_base_env_is_respected(self, monkeypatch):
+        monkeypatch.setenv("OLLAMA_API_BASE", "http://gpu-box:11434/v1")
+        provider = OllamaProvider()
+        assert provider.api_base == "http://gpu-box:11434/v1"
