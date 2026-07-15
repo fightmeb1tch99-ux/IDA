@@ -5,6 +5,11 @@
  *   })
  */
 import { ENV } from "./env";
+import {
+  buildForgeUrl,
+  createForgeJsonHeaders,
+  readResponseErrorDetail,
+} from "./forge";
 
 export type DataApiCallOptions = {
   query?: Record<string, unknown>;
@@ -24,18 +29,14 @@ export async function callDataApi(
     throw new Error("BUILT_IN_FORGE_API_KEY is not configured");
   }
 
-  // Build the full URL by appending the service path to the base URL
-  const baseUrl = ENV.forgeApiUrl.endsWith("/") ? ENV.forgeApiUrl : `${ENV.forgeApiUrl}/`;
-  const fullUrl = new URL("webdevtoken.v1.WebDevService/CallApi", baseUrl).toString();
+  const fullUrl = buildForgeUrl(
+    ENV.forgeApiUrl,
+    "webdevtoken.v1.WebDevService/CallApi"
+  );
 
   const response = await fetch(fullUrl, {
     method: "POST",
-    headers: {
-      accept: "application/json",
-      "content-type": "application/json",
-      "connect-protocol-version": "1",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
-    },
+    headers: createForgeJsonHeaders(ENV.forgeApiKey),
     body: JSON.stringify({
       apiId,
       query: options.query,
@@ -46,7 +47,7 @@ export async function callDataApi(
   });
 
   if (!response.ok) {
-    const detail = await response.text().catch(() => "");
+    const detail = await readResponseErrorDetail(response);
     throw new Error(
       `Data API request failed (${response.status} ${response.statusText})${detail ? `: ${detail}` : ""}`
     );

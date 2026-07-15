@@ -40,56 +40,6 @@ export default function Chat() {
     scrollToBottom();
   }, [messages]);
 
-  const handleStreamingResponse = async (userInput: string, conversationHistory: any[]) => {
-    try {
-      // First, send the message normally to get streaming
-      const result = await sendMessageMutation.mutateAsync({
-        message: userInput,
-        conversationHistory,
-      });
-
-      // If streaming not available, use regular response
-      if (result.response) {
-        const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          text: result.response.content,
-          sender: 'assistant',
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [...prev, assistantMessage]);
-        toast.success('✓ Ответ получен');
-      }
-    } catch (error) {
-      console.error('Streaming error:', error);
-      
-      let errorText = 'Ошибка подключения';
-      if (error instanceof Error) {
-        if (error.message.includes('OPENAI_API_KEY')) {
-          errorText = 'OpenAI API ключ не настроен. Свяжитесь с администратором.';
-        } else if (error.message.includes('401')) {
-          errorText = 'Неверный OpenAI API ключ.';
-        } else if (error.message.includes('429')) {
-          errorText = 'Слишком много запросов. Попробуй позже.';
-        } else if (error.message.includes('timeout')) {
-          errorText = 'Соединение истекло. Проверь интернет.';
-        } else {
-          errorText = error.message;
-        }
-      }
-
-      toast.error(`❌ ${errorText}`);
-      
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: `Ошибка: ${errorText}`,
-        sender: 'assistant',
-        timestamp: new Date(),
-        error: true,
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    }
-  };
-
   const handleSendMessage = async () => {
     if (!inputText.trim()) return;
     if (isLoading) return;

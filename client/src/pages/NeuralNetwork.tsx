@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Card } from '@/components/ui/card';
 import DashboardLayout from '@/components/DashboardLayout';
+import { drawCanvasGrid } from '@/lib/canvas';
 
 interface Neuron {
   id: number;
@@ -102,20 +103,7 @@ export default function NeuralNetwork() {
       ctx.fillStyle = '#0a0e1a';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.strokeStyle = 'rgba(6, 182, 212, 0.05)';
-      ctx.lineWidth = 1;
-      for (let i = 0; i < canvas.width; i += 40) {
-        ctx.beginPath();
-        ctx.moveTo(i, 0);
-        ctx.lineTo(i, canvas.height);
-        ctx.stroke();
-      }
-      for (let i = 0; i < canvas.height; i += 40) {
-        ctx.beginPath();
-        ctx.moveTo(0, i);
-        ctx.lineTo(canvas.width, i);
-        ctx.stroke();
-      }
+      drawCanvasGrid(ctx, canvas);
 
       const updatedNeurons = neurons.map(neuron => ({
         ...neuron,

@@ -1,5 +1,10 @@
 import { TRPCError } from "@trpc/server";
 import { ENV } from "./env";
+import {
+  buildForgeUrl,
+  createForgeJsonHeaders,
+  readResponseErrorDetail,
+} from "./forge";
 
 export type NotificationPayload = {
   title: string;
@@ -12,16 +17,6 @@ const CONTENT_MAX_LENGTH = 20000;
 const trimValue = (value: string): string => value.trim();
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.trim().length > 0;
-
-const buildEndpointUrl = (baseUrl: string): string => {
-  const normalizedBase = baseUrl.endsWith("/")
-    ? baseUrl
-    : `${baseUrl}/`;
-  return new URL(
-    "webdevtoken.v1.WebDevService/SendNotification",
-    normalizedBase
-  ).toString();
-};
 
 const validatePayload = (input: NotificationPayload): NotificationPayload => {
   if (!isNonEmptyString(input.title)) {
@@ -82,22 +77,20 @@ export async function notifyOwner(
     });
   }
 
-  const endpoint = buildEndpointUrl(ENV.forgeApiUrl);
+  const endpoint = buildForgeUrl(
+    ENV.forgeApiUrl,
+    "webdevtoken.v1.WebDevService/SendNotification"
+  );
 
   try {
     const response = await fetch(endpoint, {
       method: "POST",
-      headers: {
-        accept: "application/json",
-        authorization: `Bearer ${ENV.forgeApiKey}`,
-        "content-type": "application/json",
-        "connect-protocol-version": "1",
-      },
+      headers: createForgeJsonHeaders(ENV.forgeApiKey),
       body: JSON.stringify({ title, content }),
     });
 
     if (!response.ok) {
-      const detail = await response.text().catch(() => "");
+      const detail = await readResponseErrorDetail(response);
       console.warn(
         `[Notification] Failed to notify owner (${response.status} ${response.statusText})${
           detail ? `: ${detail}` : ""

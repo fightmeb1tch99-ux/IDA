@@ -113,6 +113,20 @@ class SDKServer {
     return first ? first.toLowerCase() : null;
   }
 
+  private normalizeLoginMethod<T extends GetUserInfoResponse>(data: T): T {
+    const { platforms } = data as T & { platforms?: unknown };
+    const loginMethod = this.deriveLoginMethod(
+      platforms,
+      data.platform ?? null
+    );
+
+    return {
+      ...data,
+      platform: loginMethod,
+      loginMethod,
+    };
+  }
+
   /**
    * Exchange OAuth authorization code for access token
    * @example
@@ -134,15 +148,7 @@ class SDKServer {
     const data = await this.oauthService.getUserInfoByToken({
       accessToken,
     } as ExchangeTokenResponse);
-    const loginMethod = this.deriveLoginMethod(
-      (data as any)?.platforms,
-      (data as any)?.platform ?? data.platform ?? null
-    );
-    return {
-      ...(data as any),
-      platform: loginMethod,
-      loginMethod,
-    } as GetUserInfoResponse;
+    return this.normalizeLoginMethod(data);
   }
 
   private parseCookies(cookieHeader: string | undefined) {
@@ -245,15 +251,7 @@ class SDKServer {
       payload
     );
 
-    const loginMethod = this.deriveLoginMethod(
-      (data as any)?.platforms,
-      (data as any)?.platform ?? data.platform ?? null
-    );
-    return {
-      ...(data as any),
-      platform: loginMethod,
-      loginMethod,
-    } as GetUserInfoWithJwtResponse;
+    return this.normalizeLoginMethod(data);
   }
 
   async authenticateRequest(req: Request): Promise<AuthenticatedUser> {

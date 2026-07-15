@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Mic, MicOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { drawCanvasGrid } from '@/lib/canvas';
 
 interface FrequencyData {
   frequencies: Uint8Array;
@@ -38,21 +39,7 @@ export default function VoiceVisualizer() {
       ctx.fillStyle = '#0a0e1a';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Сетка
-      ctx.strokeStyle = 'rgba(6, 182, 212, 0.05)';
-      ctx.lineWidth = 1;
-      for (let i = 0; i < canvas.width; i += 40) {
-        ctx.beginPath();
-        ctx.moveTo(i, 0);
-        ctx.lineTo(i, canvas.height);
-        ctx.stroke();
-      }
-      for (let i = 0; i < canvas.height; i += 40) {
-        ctx.beginPath();
-        ctx.moveTo(0, i);
-        ctx.lineTo(canvas.width, i);
-        ctx.stroke();
-      }
+      drawCanvasGrid(ctx, canvas);
 
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;

@@ -1,5 +1,10 @@
 import { TRPCError } from "@trpc/server";
 import { ENV } from "./env";
+import {
+  buildForgeUrl,
+  createForgeJsonHeaders,
+  readResponseErrorDetail,
+} from "./forge";
 
 export type HeartbeatJob = {
   name: string;
@@ -55,9 +60,7 @@ const buildEndpoint = (rpc: string): string => {
       message: "Heartbeat service API key is not configured (BUILT_IN_FORGE_API_KEY).",
     });
   }
-  const baseUrl = ENV.forgeApiUrl;
-  const normalizedBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
-  return new URL(`${SERVICE}/${rpc}`, normalizedBase).toString();
+  return buildForgeUrl(ENV.forgeApiUrl, `${SERVICE}/${rpc}`);
 };
 
 const callForge = async <T>(
@@ -66,12 +69,7 @@ const callForge = async <T>(
   userSession: string
 ): Promise<T> => {
   const endpoint = buildEndpoint(rpc);
-  const headers: Record<string, string> = {
-    accept: "application/json",
-    authorization: `Bearer ${ENV.forgeApiKey}`,
-    "content-type": "application/json",
-    "connect-protocol-version": "1",
-  };
+  const headers = createForgeJsonHeaders(ENV.forgeApiKey);
   // userSession is the decoded `app_session_id` cookie value (NOT the raw
   // Cookie header). Empty string falls back to the project owner identity.
   if (userSession) {
@@ -93,7 +91,7 @@ const callForge = async <T>(
   }
 
   if (!response.ok) {
-    const detail = await response.text().catch(() => "");
+    const detail = await readResponseErrorDetail(response);
     throw mapForgeError(response, detail, rpc);
   }
   return (await response.json()) as T;

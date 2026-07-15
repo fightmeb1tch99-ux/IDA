@@ -26,6 +26,7 @@
  * ```
  */
 import { ENV } from "./env";
+import { buildForgeUrl, readResponseErrorDetail } from "./forge";
 
 export type TranscribeOptions = {
   audioUrl: string; // URL to the audio file (e.g., S3 URL)
@@ -143,14 +144,10 @@ export async function transcribeAudio(
     formData.append("prompt", prompt);
 
     // Step 4: Call the transcription service
-    const baseUrl = ENV.forgeApiUrl.endsWith("/")
-      ? ENV.forgeApiUrl
-      : `${ENV.forgeApiUrl}/`;
-    
-    const fullUrl = new URL(
-      "v1/audio/transcriptions",
-      baseUrl
-    ).toString();
+    const fullUrl = buildForgeUrl(
+      ENV.forgeApiUrl,
+      "v1/audio/transcriptions"
+    );
 
     const response = await fetch(fullUrl, {
       method: "POST",
@@ -162,7 +159,7 @@ export async function transcribeAudio(
     });
 
     if (!response.ok) {
-      const errorText = await response.text().catch(() => "");
+      const errorText = await readResponseErrorDetail(response);
       return {
         error: "Transcription service request failed",
         code: "TRANSCRIPTION_FAILED",

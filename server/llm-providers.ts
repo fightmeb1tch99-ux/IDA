@@ -17,6 +17,22 @@ export interface LLMResponse {
   tokensUsed?: number;
 }
 
+type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+type OpenAICompatibleResponse = {
+  choices?: Array<{
+    message?: {
+      content?: string;
+    };
+  }>;
+  usage?: {
+    total_tokens?: number;
+  };
+};
+
 export class LLMManager {
   private config: LLMConfig;
 
@@ -24,7 +40,7 @@ export class LLMManager {
     this.config = config;
   }
 
-  async chat(messages: Array<{ role: "user" | "assistant"; content: string }>): Promise<LLMResponse> {
+  async chat(messages: ChatMessage[]): Promise<LLMResponse> {
     switch (this.config.provider) {
       case "openai":
         return this.chatOpenAI(messages);
@@ -41,7 +57,7 @@ export class LLMManager {
     }
   }
 
-  private async chatOpenAI(messages: Array<{ role: "user" | "assistant"; content: string }>): Promise<LLMResponse> {
+  private async chatOpenAI(messages: ChatMessage[]): Promise<LLMResponse> {
     const openai = new OpenAI({ apiKey: this.config.apiKey });
     const response = await openai.chat.completions.create({
       model: this.config.model,
@@ -57,7 +73,7 @@ export class LLMManager {
     };
   }
 
-  private async chatClaude(messages: Array<{ role: "user" | "assistant"; content: string }>): Promise<LLMResponse> {
+  private async chatClaude(messages: ChatMessage[]): Promise<LLMResponse> {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -80,7 +96,7 @@ export class LLMManager {
     };
   }
 
-  private async chatGemini(messages: Array<{ role: "user" | "assistant"; content: string }>): Promise<LLMResponse> {
+  private async chatGemini(messages: ChatMessage[]): Promise<LLMResponse> {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${this.config.model}:generateContent?key=${this.config.apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -99,8 +115,13 @@ export class LLMManager {
     };
   }
 
-  private async chatGroq(messages: Array<{ role: "user" | "assistant"; content: string }>): Promise<LLMResponse> {
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+  private async chatOpenAICompatible(
+    provider: "groq" | "mistral",
+    endpoint: string,
+    messages: ChatMessage[],
+    includeUsage: boolean
+  ): Promise<LLMResponse> {
+    const response = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -113,35 +134,36 @@ export class LLMManager {
         max_tokens: this.config.maxTokens ?? 1000,
       }),
     });
-    const data = await response.json() as any;
-    return {
+    const data = await response.json() as OpenAICompatibleResponse;
+    const result: LLMResponse = {
       content: data.choices?.[0]?.message?.content || "",
-      provider: "groq",
+      provider,
       model: this.config.model,
-      tokensUsed: data.usage?.total_tokens,
     };
+
+    if (includeUsage) {
+      result.tokensUsed = data.usage?.total_tokens;
+    }
+
+    return result;
   }
 
-  private async chatMistral(messages: Array<{ role: "user" | "assistant"; content: string }>): Promise<LLMResponse> {
-    const response = await fetch("https://api.mistral.ai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${this.config.apiKey}`,
-      },
-      body: JSON.stringify({
-        model: this.config.model,
-        messages,
-        temperature: this.config.temperature ?? 0.7,
-        max_tokens: this.config.maxTokens ?? 1000,
-      }),
-    });
-    const data = await response.json() as any;
-    return {
-      content: data.choices?.[0]?.message?.content || "",
-      provider: "mistral",
-      model: this.config.model,
-    };
+  private async chatGroq(messages: ChatMessage[]): Promise<LLMResponse> {
+    return this.chatOpenAICompatible(
+      "groq",
+      "https://api.groq.com/openai/v1/chat/completions",
+      messages,
+      true
+    );
+  }
+
+  private async chatMistral(messages: ChatMessage[]): Promise<LLMResponse> {
+    return this.chatOpenAICompatible(
+      "mistral",
+      "https://api.mistral.ai/v1/chat/completions",
+      messages,
+      false
+    );
   }
 
   updateConfig(config: Partial<LLMConfig>) {

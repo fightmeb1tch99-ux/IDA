@@ -17,6 +17,11 @@
  */
 import { storagePut } from "server/storage";
 import { ENV } from "./env";
+import {
+  buildForgeUrl,
+  createForgeJsonHeaders,
+  readResponseErrorDetail,
+} from "./forge";
 
 // Default model for generated sites. "MODEL_GPT_IMAGE_2" is the forge images.v1
 // enum for GPT Image 2 (id: gpt-image-2). If omitted, forge falls back to Gemini 2.5 Flash.
@@ -50,14 +55,10 @@ export async function generateImage(
     throw new Error("BUILT_IN_FORGE_API_KEY is not configured");
   }
 
-  // Build the full URL by appending the service path to the base URL
-  const baseUrl = ENV.forgeApiUrl.endsWith("/")
-    ? ENV.forgeApiUrl
-    : `${ENV.forgeApiUrl}/`;
-  const fullUrl = new URL(
+  const fullUrl = buildForgeUrl(
+    ENV.forgeApiUrl,
     "images.v1.ImageService/GenerateImage",
-    baseUrl
-  ).toString();
+  );
 
   const model = options.model ?? DEFAULT_IMAGE_MODEL;
   const quality =
@@ -65,12 +66,7 @@ export async function generateImage(
 
   const response = await fetch(fullUrl, {
     method: "POST",
-    headers: {
-      accept: "application/json",
-      "content-type": "application/json",
-      "connect-protocol-version": "1",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
-    },
+    headers: createForgeJsonHeaders(ENV.forgeApiKey),
     body: JSON.stringify({
       prompt: options.prompt,
       original_images: options.originalImages || [],
@@ -80,7 +76,7 @@ export async function generateImage(
   });
 
   if (!response.ok) {
-    const detail = await response.text().catch(() => "");
+    const detail = await readResponseErrorDetail(response);
     throw new Error(
       `Image generation request failed (${response.status} ${response.statusText})${detail ? `: ${detail}` : ""}`
     );
@@ -129,27 +125,19 @@ export async function listImageModels(): Promise<ListImageModelsResponse> {
     throw new Error("BUILT_IN_FORGE_API_KEY is not configured");
   }
 
-  const baseUrl = ENV.forgeApiUrl.endsWith("/")
-    ? ENV.forgeApiUrl
-    : `${ENV.forgeApiUrl}/`;
-  const fullUrl = new URL(
+  const fullUrl = buildForgeUrl(
+    ENV.forgeApiUrl,
     "images.v1.ImageService/ListModels",
-    baseUrl
-  ).toString();
+  );
 
   const response = await fetch(fullUrl, {
     method: "POST",
-    headers: {
-      accept: "application/json",
-      "content-type": "application/json",
-      "connect-protocol-version": "1",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
-    },
+    headers: createForgeJsonHeaders(ENV.forgeApiKey),
     body: "{}",
   });
 
   if (!response.ok) {
-    const detail = await response.text().catch(() => "");
+    const detail = await readResponseErrorDetail(response);
     throw new Error(
       `List image models failed (${response.status} ${response.statusText})${detail ? `: ${detail}` : ""}`
     );
