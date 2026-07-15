@@ -27,6 +27,10 @@ export const appRouter = router({
           role: z.enum(['user', 'assistant']),
           content: z.string(),
         })).optional(),
+        provider: z.enum(['openai', 'claude', 'gemini', 'mistral', 'groq']).optional(),
+        model: z.string().optional(),
+        temperature: z.number().min(0).max(2).optional(),
+        apiKey: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
         try {
@@ -35,11 +39,17 @@ export const appRouter = router({
             { role: 'user' as const, content: input.message },
           ];
 
-          const response = await chatWithLLM(messages);
+          const response = await chatWithLLM(messages, {
+            provider: input.provider,
+            model: input.model,
+            temperature: input.temperature,
+            apiKey: input.apiKey,
+          });
           return { success: true, response };
         } catch (error) {
           console.error('Chat error:', error);
-          throw new Error('Failed to get response from GPT');
+          const message = error instanceof Error ? error.message : 'Failed to get response from LLM';
+          throw new Error(message);
         }
       }),
   }),

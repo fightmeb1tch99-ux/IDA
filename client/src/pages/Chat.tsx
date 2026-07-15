@@ -15,6 +15,23 @@ interface Message {
   isStreaming?: boolean;
 }
 
+type LLMProvider = 'openai' | 'claude' | 'gemini' | 'mistral' | 'groq';
+
+function readLLMSettings() {
+  if (typeof window === 'undefined') return {};
+  const provider = localStorage.getItem('llm_provider') as LLMProvider | null;
+  const model = localStorage.getItem('llm_model');
+  const temperatureRaw = localStorage.getItem('llm_temperature');
+  const apiKey = localStorage.getItem('llm_api_key');
+  const temperature = temperatureRaw ? parseFloat(temperatureRaw) : undefined;
+  return {
+    provider: provider || undefined,
+    model: model || undefined,
+    temperature: Number.isFinite(temperature) ? temperature : undefined,
+    apiKey: apiKey || undefined,
+  };
+}
+
 export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -130,6 +147,7 @@ export default function Chat() {
       const result = await sendMessageMutation.mutateAsync({
         message: userInput,
         conversationHistory,
+        ...readLLMSettings(),
       });
 
       if (!result.response) {

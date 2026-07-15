@@ -15,7 +15,7 @@ const PROVIDERS = {
   openai: { name: "OpenAI", models: ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"], color: "from-green-500 to-emerald-600" },
   claude: { name: "Claude (Anthropic)", models: ["claude-3-5-sonnet-20241022", "claude-3-opus-20240229", "claude-3-sonnet-20240229"], color: "from-orange-500 to-red-600" },
   gemini: { name: "Gemini (Google)", models: ["gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"], color: "from-blue-500 to-cyan-600" },
-  groq: { name: "Groq", models: ["mixtral-8x7b-32768", "llama-3-70b-8192", "llama-3-8b-8192"], color: "from-purple-500 to-pink-600" },
+  groq: { name: "Groq", models: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "llama-3-70b-8192"], color: "from-purple-500 to-pink-600" },
   mistral: { name: "Mistral AI", models: ["mistral-large-latest", "mistral-medium-latest", "mistral-small-latest"], color: "from-yellow-500 to-orange-600" },
 };
 
@@ -184,8 +184,8 @@ export default function Settings() {
           <Card className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border-cyan-500/30 p-6">
             <h3 className="text-white font-bold mb-2">ℹ️ Информация</h3>
             <ul className="text-slate-300 text-sm space-y-1">
-              <li>✅ Все настройки сохраняются локально</li>
-              <li>✅ Ключи никогда не отправляются на сервер</li>
+              <li>✅ Настройки сохраняются локально в браузере</li>
+              <li>🔑 Ключ отправляется на сервер только для выполнения запроса к провайдеру</li>
               <li>✅ Можешь менять провайдера в любой момент</li>
               <li>✅ Если один ИИ не работает, используй другой</li>
             </ul>
