@@ -7,7 +7,7 @@ import re
 from typing import List, Dict, Any, Optional
 from agents.base import BaseAgent
 from brain import Brain
-from logger import log_info, log_error, log_debug
+from logger import log_info, log_warning
 
 class PlannerAgent(BaseAgent):
     def __init__(self, brain: Brain):
@@ -38,5 +38,5 @@ class PlannerAgent(BaseAgent):
             log_info("[Planner - Task Architect] Plan generated successfully")
             return {"plan": plan}
         except Exception as e:
-            log_debug(f"[Planner] Using fallback plan due to parse error")
+            log_warning(f"[Planner] Failed to parse plan, falling back to single step: {str(e)}")
             return {"plan": [task]} # Fallback to single step

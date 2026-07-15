@@ -41,11 +41,12 @@ class SystemController:
             if self.os_type == "Windows":
                 os.startfile(app_name)
             elif self.os_type == "Darwin":  # macOS
-                subprocess.run(["open", "-a", app_name])
+                subprocess.run(["open", "-a", app_name], check=True)
             else:  # Linux/Termux
-                subprocess.run(["xdg-open", app_name])
+                subprocess.run(["xdg-open", app_name], check=True)
             return f"Открываю {app_name}, бро."
         except Exception as e:
+            log_error(f"Failed to open app {app_name}", e)
             return f"Не удалось открыть {app_name}."
 
     def search_web(self, query):

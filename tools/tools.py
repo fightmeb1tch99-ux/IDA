@@ -94,8 +94,8 @@ def _load_notes():
         try:
             with open(NOTES_FILE, encoding="utf-8") as f:
                 return json.load(f)
-        except Exception:
-            pass
+        except (json.JSONDecodeError, OSError) as e:
+            log_error(f"Failed to load notes from {NOTES_FILE}", e)
     return []
 
 

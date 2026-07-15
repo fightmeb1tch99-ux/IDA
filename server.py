@@ -9,6 +9,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 import openai
 from dotenv import load_dotenv
+from logger import log_error
 
 # Load secrets
 load_dotenv()
@@ -48,7 +49,7 @@ async def chat_proxy(request: ChatRequest):
         )
         return {"response": response.choices[0].message.content}
     except Exception as e:
-        print(f"Proxy error: {e}")
+        log_error("Chat proxy request failed", e)
         raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":

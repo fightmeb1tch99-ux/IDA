@@ -88,6 +88,7 @@ async def get_notes():
         notes = memory.get("notes", [])
         return {"notes": notes}
     except Exception as e:
+        log_error("Failed to fetch notes", e)
         return {"error": str(e)}
 
 @app.get("/api/history")
@@ -97,6 +98,7 @@ async def get_history():
         history = memory.get("history", [])
         return {"history": history[-50:]}  # Last 50 messages
     except Exception as e:
+        log_error("Failed to fetch history", e)
         return {"error": str(e)}
 
 @app.get("/api/stats")
@@ -111,6 +113,7 @@ async def get_stats():
             "status": "online"
         }
     except Exception as e:
+        log_error("Failed to compute stats", e)
         return {"error": str(e)}
 
 if __name__ == "__main__":

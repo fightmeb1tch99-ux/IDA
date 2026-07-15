@@ -164,7 +164,7 @@ class Brain:
             return response.data[0].embedding
         except Exception as e:
             # Fallback: Return a pseudo-random embedding based on text hash if API fails
-            log_warning(f"Embeddings API not available. Using fallback mechanism.")
+            log_warning(f"Embeddings API not available ({str(e)}). Using fallback hash-based embedding.")
             import hashlib
             hash_val = int(hashlib.md5(text.encode()).hexdigest(), 16)
             pseudo_vec = [(hash_val >> i) & 1 for i in range(1536)]
@@ -175,10 +175,10 @@ class Brain:
         prompt = self._get_prompt('tool_decision', input=user_input)
         response = self._get_llm_response(prompt, temperature=0)
         try:
-            import json
             data = json.loads(response)
             return data.get("tool"), data.get("arg")
-        except:
+        except (json.JSONDecodeError, TypeError) as e:
+            log_warning(f"Could not parse tool decision from LLM response: {str(e)}")
             return None, None
 
     def add_to_history(self, user: str, response: str):
