@@ -6,6 +6,9 @@ Modify these settings to customize agent behavior.
 import os
 
 # LLM / OpenAI configuration
+# LLM_PROVIDER selects the backend implemented in the `providers` package.
+# Supported out of the box: "openai" (any OpenAI-compatible endpoint) and "ollama".
+LLM_PROVIDER = os.getenv("IDA_LLM_PROVIDER", "openai")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", "https://api.manus.im/api/llm-proxy/v1")
 

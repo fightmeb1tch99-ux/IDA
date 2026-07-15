@@ -3,8 +3,7 @@ Unit tests for Brain module with multilingual support.
 Tests cover: language switching, prompt generation, LLM responses, error handling.
 """
 import pytest
-import json
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from brain import Brain, LANGUAGE_PROMPTS
 
 
@@ -23,7 +22,7 @@ class TestBrainMultilingual:
         brain = Brain(memory)
         assert brain.language == 'ru'
         assert brain.conversation_history == []
-        assert brain.client is None
+        assert brain.provider is None
     
     def test_set_language_russian(self, brain):
         """Test setting language to Russian"""
@@ -91,51 +90,44 @@ class TestBrainMultilingual:
         brain.add_to_history('Q3', 'A3')
         assert len(brain.conversation_history) == 3
     
-    @patch('brain.OpenAI')
-    def test_get_client_success(self, mock_openai, brain):
-        """Test successful OpenAI client initialization"""
-        with patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'}):
-            client = brain._get_client()
-            assert client is not None
-    
-    @patch('brain.OpenAI', side_effect=Exception('API Error'))
-    def test_get_client_failure(self, mock_openai, brain):
-        """Test OpenAI client initialization failure"""
-        client = brain._get_client()
-        assert client is None
-    
-    @patch.object(Brain, '_get_client')
-    def test_generate_response_no_client(self, mock_client, brain):
-        """Test response generation when client is missing"""
-        mock_client.return_value = None
+    def test_get_provider_lazy_init(self, brain):
+        """Provider is created lazily and cached across calls."""
+        fake = Mock()
+        with patch('brain.create_provider', return_value=fake) as factory:
+            first = brain._get_provider()
+            second = brain._get_provider()
+        assert first is fake
+        assert second is fake
+        factory.assert_called_once()
+
+    @patch.object(Brain, '_get_provider')
+    def test_generate_response_no_client(self, mock_provider, brain):
+        """Test response generation when the provider is not configured"""
+        mock_provider.return_value = Mock(is_available=Mock(return_value=False))
         response = brain.generate_response('test')
         assert 'missing' in response.lower() or 'API' in response
-    
-    @patch.object(Brain, '_get_client')
-    def test_generate_response_with_client(self, mock_client, brain):
-        """Test response generation with valid client"""
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content='Test response'))]
-        
-        mock_api_client = Mock()
-        mock_api_client.chat.completions.create.return_value = mock_response
-        mock_client.return_value = mock_api_client
-        
+
+    @patch.object(Brain, '_get_provider')
+    def test_generate_response_with_client(self, mock_provider, brain):
+        """Test response generation with an available provider"""
+        provider = Mock()
+        provider.is_available.return_value = True
+        provider.chat.return_value = 'Test response'
+        mock_provider.return_value = provider
+
         response = brain.generate_response('test input')
         assert response == 'Test response'
-    
+
     @patch.object(Brain, '_get_llm_response')
-    @patch.object(Brain, '_get_client')
-    def test_generate_response_empty_fallback(self, mock_client, mock_llm, brain):
+    @patch.object(Brain, '_get_provider')
+    def test_generate_response_empty_fallback(self, mock_provider, mock_llm, brain):
         """Test response generation with empty response fallback"""
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content=''))]
-        
-        mock_api_client = Mock()
-        mock_api_client.chat.completions.create.return_value = mock_response
-        mock_client.return_value = mock_api_client
+        provider = Mock()
+        provider.is_available.return_value = True
+        provider.chat.return_value = ''
+        mock_provider.return_value = provider
         mock_llm.return_value = 'Fallback response'
-        
+
         response = brain.generate_response('test input')
         assert response == 'Fallback response'
     

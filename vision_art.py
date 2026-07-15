@@ -3,26 +3,32 @@ IDA Vision & Art Module
 Handles image analysis (Vision) and image generation (DALL-E).
 """
 
-import os
-import requests
-from openai import OpenAI
+import base64
+
 from dotenv import load_dotenv
-from logger import log_info, log_error
+
+from logger import log_error
+from providers import create_provider
 
 load_dotenv()
-client = OpenAI()
+
+
+def _get_client():
+    """Return the underlying OpenAI-compatible client from the configured provider."""
+    return create_provider()._get_client()
+
 
 def analyze_image(image_path, prompt="Что на этом изображении?"):
     """Analyze image using GPT-4o Vision."""
-    import base64
-    
+
     def encode_image(path):
         with open(path, "rb") as image_file:
             return base64.b64encode(image_file.read()).decode('utf-8')
 
     base64_image = encode_image(image_path)
-    
+
     try:
+        client = _get_client()
         response = client.chat.completions.create(
             model="gpt-4o",
             messages=[
@@ -47,6 +53,7 @@ def analyze_image(image_path, prompt="Что на этом изображени�
 def generate_image(prompt):
     """Generate image using DALL-E 3."""
     try:
+        client = _get_client()
         response = client.images.generate(
             model="dall-e-3",
             prompt=prompt,

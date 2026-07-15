@@ -7,20 +7,16 @@ import os
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
-import openai
 from dotenv import load_dotenv
+
+from providers import create_provider
 
 # Load secrets
 load_dotenv()
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
 MODEL = os.getenv("IDA_MODEL", "gpt-5-mini")
 
-if not OPENAI_API_KEY:
-    print("CRITICAL: OPENAI_API_KEY not found in environment!")
-
 app = FastAPI(title="IDA API Server")
-client = openai.OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_API_BASE)
+
 
 class Message(BaseModel):
     role: str
@@ -36,17 +32,18 @@ async def root():
 
 @app.post("/v1/chat")
 async def chat_proxy(request: ChatRequest):
-    """Securely proxy chat requests to OpenAI."""
-    if not OPENAI_API_KEY:
+    """Securely proxy chat requests to the configured LLM provider."""
+    provider = create_provider()
+    if not provider.is_available():
         raise HTTPException(status_code=500, detail="API Key not configured on server")
-    
+
     try:
-        response = client.chat.completions.create(
+        content = provider.chat(
+            [m.model_dump() for m in request.messages],
             model=MODEL,
-            messages=[m.model_dump() for m in request.messages],
-            temperature=request.temperature
+            temperature=request.temperature,
         )
-        return {"response": response.choices[0].message.content}
+        return {"response": content}
     except Exception as e:
         print(f"Proxy error: {e}")
         raise HTTPException(status_code=500, detail=str(e))

@@ -4,9 +4,9 @@
 # LLM integration (required for smart responses)
 openai>=1.0.0
 
-# ── Development & testing (optional) ──────────────
-# pytest>=7.0.0
-# pytest-cov>=4.0.0
+# ── Development & testing ─────────────────────────
+pytest>=7.0.0
+pytest-cov>=4.0.0
 # black>=23.0.0
 # pylint>=3.0.0
 # mypy>=1.0.0
@@ -17,6 +17,7 @@ fastapi
 uvicorn
 gunicorn
 python-telegram-bot>=20.0
+aiohttp
 PyPDF2
 sentence-transformers
 SpeechRecognition
