@@ -1,0 +1,169 @@
+:root {
+    --pixel-size: 4px;
+    --bg-color: #222;
+    --text-color: #fff;
+    --primary-color: #4ade80;
+    --sun-color: #facc15;
+    --cloud-color: #d1d5db;
+    --rain-color: #60a5fa;
+    --snow-color: #ffffff;
+    --storm-color: #a855f7;
+}
+
+body {
+    background-color: #111;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: 'Press Start 2P', cursive;
+    color: var(--text-color);
+}
+
+.widget-container {
+    background-color: var(--bg-color);
+    border: calc(var(--pixel-size) * 2) solid #000;
+    padding: 20px;
+    box-shadow: 10px 10px 0px #000;
+    text-align: center;
+    width: 320px;
+    image-rendering: pixelated;
+}
+
+.weather-info h1 {
+    font-size: 16px;
+    margin: 10px 0;
+}
+
+.weather-info p {
+    font-size: 12px;
+    margin: 5px 0;
+}
+
+#temp {
+    font-size: 24px;
+    color: var(--primary-color);
+}
+
+.controls {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.pixel-input {
+    background: #333;
+    border: var(--pixel-size) solid #000;
+    color: #fff;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 8px;
+    padding: 5px;
+    flex-grow: 1;
+    outline: none;
+}
+
+.pixel-button {
+    background: var(--primary-color);
+    border: var(--pixel-size) solid #000;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 8px;
+    padding: 5px 10px;
+    cursor: pointer;
+    box-shadow: 4px 4px 0px #000;
+}
+
+.pixel-button:active {
+    box-shadow: 0px 0px 0px #000;
+    transform: translate(4px, 4px);
+}
+
+/* Animations */
+.weather-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 20px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 8-bit Sun */
+.sun {
+    width: 32px;
+    height: 32px;
+    background: var(--sun-color);
+    box-shadow: 
+        0 -8px 0 var(--sun-color), 0 8px 0 var(--sun-color),
+        -8px 0 0 var(--sun-color), 8px 0 0 var(--sun-color),
+        -4px -4px 0 var(--sun-color), 4px -4px 0 var(--sun-color),
+        -4px 4px 0 var(--sun-color), 4px 4px 0 var(--sun-color);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* 8-bit Cloud */
+.cloud {
+    width: 40px;
+    height: 20px;
+    background: var(--cloud-color);
+    border-radius: 0;
+    box-shadow: 
+        -8px 4px 0 var(--cloud-color), 8px 4px 0 var(--cloud-color),
+        0 -4px 0 var(--cloud-color), -4px -4px 0 var(--cloud-color);
+    animation: float 3s infinite ease-in-out;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+/* 8-bit Rain */
+.rain-drop {
+    width: 4px;
+    height: 8px;
+    background: var(--rain-color);
+    position: absolute;
+    animation: fall 0.8s infinite linear;
+}
+
+@keyframes fall {
+    0% { transform: translateY(-20px); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translateY(40px); opacity: 0; }
+}
+
+/* 8-bit Snow */
+.snow-flake {
+    width: 4px;
+    height: 4px;
+    background: var(--snow-color);
+    position: absolute;
+    animation: snow-fall 2s infinite linear;
+}
+
+@keyframes snow-fall {
+    0% { transform: translate(0, -20px); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translate(10px, 40px); opacity: 0; }
+}
+
+/* 8-bit Storm */
+.lightning {
+    width: 8px;
+    height: 24px;
+    background: #fff;
+    clip-path: polygon(50% 0%, 0% 50%, 40% 50%, 10% 100%, 100% 40%, 60% 40%, 90% 0%);
+    animation: flash 1.5s infinite;
+}
+
+@keyframes flash {
+    0%, 90%, 100% { opacity: 0; }
+    92%, 98% { opacity: 1; }
+}
