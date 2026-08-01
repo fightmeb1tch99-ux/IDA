@@ -1,16 +1,19 @@
-# 🤖 IDA — Инновационный динамический помощник v2.0
+# 🤖 IDA — Инновационный динамический помощник v4.0
 
 [![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python)](https://python.org)
 [![React Native](https://img.shields.io/badge/React_Native-Expo-purple?logo=expo)](https://expo.dev)
+[![Groq API](https://img.shields.io/badge/Groq-API-orange)](https://groq.com)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Open Source](https://img.shields.io/badge/Open_Source-100%25-orange)](https://github.com/fightmeb1tch99-ux/SYP-PROJECT)
 
-**IDA** — умный AI-агент на Python с мобильным приложением на React Native.  
-Интегрируется с OpenAI GPT, умеет отвечать на вопросы, считать, показывать погоду, сохранять заметки и многое другое.
+**IDA v4.0** — умный AI-агент на Python с мобильным приложением на React Native.  
+Интегрируется с **Groq API** (бесплатный LLM), умеет отвечать на вопросы, считать, показывать погоду, сохранять заметки и многое другое.
+
+**Создатель:** Григорьев Айтал Григорьевич (@Mareioak)
 
 ---
 
-## ✨ Что умеет IDA v2.0
+## ✨ Что умеет IDA v4.0
 
 | Команда | Пример | Описание |
 |---|---|---|
@@ -23,31 +26,66 @@
 | Файлы | `Создай файл notes.txt` | Создание файлов |
 | Команды | `Выполни ls` | Безопасные shell-команды |
 | Личное | `Меня зовут Айтал` | Запоминание имени |
-| LLM | Любой вопрос | GPT-ответ через OpenAI |
+| Голос | `Редактор` или `Editor` | Интерактивный редактор кода |
+| LLM | Любой вопрос | **Groq API** ответ (бесплатно!) |
+
+### 🎉 Новое в v4.0
+
+- ✅ **Groq API** — Бесплатный и быстрый LLM вместо OpenAI
+- ✅ **ASCII загрузка** — Красивая анимация пончика в Termux
+- ✅ **Редактор кода** — Пишите код прямо в консоли
+- ✅ **Голосовой помощник** — Распознавание и синтез речи
+- ✅ **Мобильное приложение** — React Native + Expo с темной темой
+- ✅ **Веб-страница** — Красивый лэндинг для браузера
+- ✅ **Проверка стиля** — Clang Format, ESLint, Pylint
+- ✅ **Полная документация** — На русском, якутском и английском
 
 ---
 
 ## 🚀 Быстрый старт
 
-### 1. Клонировать репозиторий
+### На Android (Termux)
+
 ```bash
-git clone https://github.com/fightmeb1tch99-ux/SYP-PROJECT
-cd SYP-PROJECT
+# 1. Установи зависимости
+pkg install python git -y
+pip install groq
+
+# 2. Клонируй проект
+git clone https://github.com/fightmeb1tch99-ux/SYP-PROJECT IDA
+cd IDA
 git checkout dev
+
+# 3. Установи Groq API ключ
+export GROQ_API_KEY="gsk_..."
+
+# 4. Запусти IDA
+python3 main.py
 ```
 
-### 2. Установить зависимости
+### На ПК (Windows/macOS/Linux)
+
 ```bash
+# 1. Установи Python 3.9+
+# https://www.python.org/downloads/
+
+# 2. Клонируй проект
+git clone https://github.com/fightmeb1tch99-ux/SYP-PROJECT IDA
+cd IDA
+git checkout dev
+
+# 3. Установи зависимости
 pip install -r requirements.txt
+
+# 4. Установи Groq API ключ
+export GROQ_API_KEY="gsk_..."
+
+# 5. Запусти IDA
+python3 main.py
 ```
 
-### 3. Настроить API ключ
-```bash
-cp .env.example .env
-# Открой .env и вставь свой OPENAI_API_KEY
-```
+### Запуск IDA
 
-### 4. Запустить
 ```bash
 # Интерактивный режим
 python3 main.py
@@ -69,31 +107,49 @@ python3 main.py --stats
 ```bash
 cd mobile-app
 npm install
-npx expo start
+npm start
 ```
 
 Откроется QR-код — сканируй в приложении **Expo Go** на телефоне.
+
+### Возможности мобильного приложения
+
+- 🎨 Темная тема (futuristic design)
+- 🎤 Голосовой помощник с анимацией
+- ⚡ Быстрые команды
+- 💾 Сохранение истории чатов
+- 🌙 Переключатель темы
+
+---
+
+## 🌐 Веб-страница
+
+Открой `landing.html` в браузере для красивого лэндинга проекта.
 
 ---
 
 ## 🗂 Структура проекта
 
 ```
-SYP-PROJECT/
-├── main.py              # Точка входа, оркестратор
-├── brain.py             # NLP, парсинг команд, LLM
-├── config.py            # Все настройки
-├── logger.py            # Логирование
-├── memory_manager.py    # Память и резервные копии
+IDA/
+├── main.py                  # Точка входа, оркестратор
+├── brain.py                 # NLP, парсинг команд, LLM (Groq)
+├── groq_client.py           # Groq API клиент
+├── config.py                # Все настройки
+├── logger.py                # Логирование
+├── ida_system.py            # Системные инструменты
 ├── tools/
-│   └── tools.py         # Инструменты: время, погода, калькулятор...
+│   └── tools.py             # Инструменты: время, погода, калькулятор...
 ├── memory/
-│   └── memory.json      # Постоянная память агента
-├── landing.html         # Лендинг-страница
-├── mobile-app/          # React Native приложение
-├── .env.example         # Шаблон переменных окружения
-├── requirements.txt     # Python зависимости
-└── README.md
+│   └── memory.json          # Постоянная память агента
+├── landing.html             # Лендинг-страница
+├── mobile-app/              # React Native приложение (Expo)
+├── README_V4.md             # Полная документация v4.0
+├── README_RU.md             # README на русском
+├── README_SAH.md            # README на якутском
+├── .env.example             # Шаблон переменных окружения
+├── requirements.txt         # Python зависимости
+└── README.md                # Этот файл
 ```
 
 ---
@@ -102,12 +158,13 @@ SYP-PROJECT/
 
 | Параметр | По умолчанию | Описание |
 |---|---|---|
-| `LLM_MODEL` | `gpt-5-mini` | Модель OpenAI |
+| `LLM_MODEL` | `mixtral-8x7b-32768` | Модель Groq |
 | `LLM_TEMPERATURE` | `0.7` | Температура генерации |
 | `CONTEXT_WINDOW` | `10` | Сколько сообщений помнит LLM |
 | `ENABLE_WEATHER` | `True` | Погода через wttr.in |
 | `ENABLE_CALCULATOR` | `True` | Встроенный калькулятор |
 | `ENABLE_NOTES` | `True` | Система заметок |
+| `GROQ_API_KEY` | `env` | Ключ Groq API |
 
 ---
 
@@ -118,16 +175,58 @@ SYP-PROJECT/
 - **Безопасный eval** — калькулятор использует ограниченный eval без builtins
 - **Валидация ввода** — максимальная длина сообщения 4096 символов
 - **.env для секретов** — API-ключи никогда не попадают в git
+- **Защита от инъекций** — Groq API защищен от prompt injection
+
+---
+
+## 🎮 Будущие обновления
+
+### v5.0 - Minecraft Integration
+- 🎮 Встроенная игра Minecraft
+- 🏗️ Строительство и исследование
+- 💬 Общение с ИИ во время игры
+- 🎨 Кастомные текстуры
+
+**Ветка:** `feature/minecraft-game`
+
+### v6.0 - Terraria Integration
+- 🎮 Встроенная игра Terraria
+- ⚔️ Боевая система
+- 🎁 Система предметов
+- 🗺️ Процедурная генерация миров
+
+**Ветка:** `feature/terraria-game`
+
+### v7.0 - Multiplayer
+- 👥 Сетевая игра
+- 🌐 Облачное хранилище
+- 🏆 Рейтинги и достижения
+- 💬 Чат между игроками
+
+**Ветка:** `feature/multiplayer`
+
+---
+
+## 🌳 Структура веток
+
+| Ветка | Описание | Статус |
+|-------|---------|--------|
+| `main` | Стабильная версия для продакшена | ✅ Активна |
+| `dev` | Текущая разработка (v4.0) | ✅ Активна |
+| `feature/minecraft-game` | Интеграция Minecraft (v5.0) | 🔄 В разработке |
+| `feature/terraria-game` | Интеграция Terraria (v6.0) | 📋 Планируется |
+| `feature/multiplayer` | Многопользовательская игра (v7.0) | 📋 Планируется |
 
 ---
 
 ## 📚 Документация
 
-- [README (English)](README.md)
-- [README (Русский)](README_RU.md)
-- [README (Саха)](README_SAH.md)
-- [Гайд по установке](INSTALLATION_GUIDE.md)
-- [История улучшений](IMPROVEMENTS.md)
+- [README (English)](README.md) — этот файл
+- [README (Русский)](README_RU.md) — на русском языке
+- [README (Саха)](README_SAH.md) — на якутском языке
+- [Полная документация v4.0](README_V4.md) — все детали
+- [Гайд по установке](INSTALLATION_GUIDE.md) — пошаговая инструкция
+- [История улучшений](IMPROVEMENTS.md) — что было сделано
 
 ---
 
@@ -138,4 +237,10 @@ SYP-PROJECT/
 
 ---
 
-*IDA v2.0 — 2026*
+## 📝 Лицензия
+
+MIT License — свободно используй в своих проектах!
+
+---
+
+*IDA v4.0 — 2026*
