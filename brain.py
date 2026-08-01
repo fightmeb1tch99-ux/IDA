@@ -1,5 +1,5 @@
 """
-Brain module for IDA AI Agent v2.0
+Brain module for IDA AI Agent v4.0
 Handles NLP, command parsing, and response generation.
 """
 
@@ -153,7 +153,7 @@ class Brain:
         if re.search(r"\b(привет|хай|здравствуй|hello|hi|hey)\b", text_lower):
             name = self.memory.get("name")
             greeting = f", {name}!" if name else "!"
-            return f"Привет{greeting} Я IDA v2.0. Чем могу помочь? 👋"
+            return f"Привет{greeting} Я IDA v4.0. Чем могу помочь? 👋"
 
         # Remember name
         m = re.search(r"меня зовут\s+(\S+)", text_lower)
@@ -189,7 +189,7 @@ class Brain:
     def _get_llm_response(self, user_input: str) -> str:
         try:
             system_prompt = (
-                f"Ты — IDA (Инновационный динамический помощник) v2.0. "
+                f"Ты — IDA (Инновационный динамический помощник) v4.0. "
                 f"Отвечай по-русски, кратко и дружелюбно. "
                 f"Имя пользователя: {self.memory.get('name', 'неизвестно')}."
             )
@@ -226,7 +226,7 @@ class Brain:
             return f"Ошибка LLM: {str(e)}"
 
     def _get_help_message(self) -> str:
-        return """Доступные команды IDA v2.0:
+        return """Доступные команды IDA v4.0:
 
 Время и дата:
   - «Какое время?» — текущее время

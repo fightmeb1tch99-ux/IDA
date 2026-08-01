@@ -1,5 +1,5 @@
 """
-IDA AI Agent v2.0 — Main entry point.
+IDA AI Agent v4.0 — Main entry point.
 Инновационный динамический помощник.
 """
 
@@ -31,14 +31,14 @@ ASCII_LOGO = f"""
   ██║██║  ██║██╔══██║
   ██║██████╔╝██║  ██║
   ╚═╝╚═════╝ ╚═╝  ╚═╝
-{Colors.END}{Colors.GRAY}  Инновационный Динамический Помощник v2.0{Colors.END}
+{Colors.END}{Colors.GRAY}  Инновационный Динамический Помощник v4.0{Colors.END}
 """
 
 class AIAgent:
     """Main AI Agent orchestrator."""
 
     def __init__(self):
-        log_info("Initializing IDA AI Agent v2.0...")
+        log_info("Initializing IDA AI Agent v4.0...")
         DonutLoader.show_loading("Инициализация IDA", 2.0)
         self.memory_manager = MemoryManager()
         self.brain = Brain(self.memory_manager.memory)
