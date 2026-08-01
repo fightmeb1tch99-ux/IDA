@@ -3,6 +3,7 @@
 
 # LLM integration (required for smart responses)
 openai>=1.0.0
+groq>=0.4.1
 
 # ── Development & testing (optional) ──────────────
 # pytest>=7.0.0

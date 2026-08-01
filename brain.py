@@ -1,185 +1,260 @@
 """
-Brain module for IDA OS v3.0
-Enhanced with Reasoning, ReAct support, and Multilingual capabilities.
+Brain module for IDA AI Agent v4.0
+Handles NLP, command parsing, and response generation.
 """
+
 import re
 import os
-import json
+
+try:
+    from openai import OpenAI
+    _openai_available = True
+except ImportError:
+    _openai_available = False
+
+try:
+    from groq import Groq
+    _groq_available = True
+except ImportError:
+    _groq_available = False
+
 from logger import log_info, log_error, log_debug, log_warning
 from config import (
     LLM_MODEL, LLM_TEMPERATURE, LLM_MAX_TOKENS,
     OPENAI_API_KEY, OPENAI_API_BASE, CONTEXT_WINDOW,
-    EMBEDDING_MODEL
 )
 
-# Multilingual support: Russian, Sakha (Yakut), English
-LANGUAGE_PROMPTS = {
-    'ru': {
-        'system': "Ты — IDA OS, автономный ИИ-агент. Твоя задача — помогать пользователю. Отвечай на русском языке.",
-        'thought': "Ты — IDA OS. Проанализируй задачу шаг за шагом и напиши краткий план действий.\nЗадача: {input}",
-        'tool_decision': "System: Identify if any tool is needed for this task: '{input}'. Available tools: weather, calculator, search, stats. Respond ONLY in JSON format: {{\"tool\": \"tool_name\" or null, \"arg\": \"argument\" or null}}",
-        'api_error': "OpenAI API key missing.",
-        'llm_error': "Ошибка при генерации ответа: {error}",
-        'empty_response': "Я выполнил задачу, но не смог сформулировать текстовый ответ. Система работает в штатном режиме.",
-        'news_fallback': "Я нашел новости, но не смог их кратко пересказать. Пожалуйста, проверь результаты поиска напрямую.",
-    },
-    'sah': {
-        'system': "Эн — IDA OS, автономнай ИИ-агент. Эн сабай — аат туох кыттыы. Саха тылынан хоруй.",
-        'thought': "Эн — IDA OS. Ыйыы сокуоннарын анализ кыл эбэтэр сокуон плана бичи.\nЫйыы: {input}",
-        'tool_decision': "System: Identify if any tool is needed for this task: '{input}'. Available tools: weather, calculator, search, stats. Respond ONLY in JSON format: {{\"tool\": \"tool_name\" or null, \"arg\": \"argument\" or null}}",
-        'api_error': "OpenAI API ачкы сокуобалаа.",
-        'llm_error': "Хоруу уонна сыаналлаах алгыс: {error}",
-        'empty_response': "Мин ыйыыны ылыппын, онно эмэ тиэкиэл хоруу сыаналлаах алгыс сыаналлаа алдьатпын.",
-        'news_fallback': "Мин сэргэ сыаналлаа сыаналлаа алдьатпын, онно эмэ сокуоннарын кыскаанан сыаналлаа алдьатпын.",
-    },
-    'en': {
-        'system': "You are IDA OS, an autonomous AI agent. Your task is to help the user. Respond in English.",
-        'thought': "You are IDA OS. Analyze the task step by step and write a brief action plan.\nTask: {input}",
-        'tool_decision': "System: Identify if any tool is needed for this task: '{input}'. Available tools: weather, calculator, search, stats. Respond ONLY in JSON format: {{\"tool\": \"tool_name\" or null, \"arg\": \"argument\" or null}}",
-        'api_error': "OpenAI API key missing.",
-        'llm_error': "Error generating response: {error}",
-        'empty_response': "I completed the task, but couldn't formulate a text response. The system is operating normally.",
-        'news_fallback': "I found news, but couldn't summarize them briefly. Please check the search results directly.",
+
+class CommandParser:
+    """Parses user input and maps it to tool names using regex patterns."""
+
+    PATTERNS = {
+        "time": [
+            r"(?:какое|которое|скажи|напиши|покажи)?\s*время",
+            r"текущее\s+время",
+            r"сколько\s+(?:сейчас\s+)?времени",
+            r"который\s+час",
+        ],
+        "date": [
+            r"(?:какая|какое|скажи|напиши|покажи)?\s*(?:сегодня\s+)?дата|сегодня",
+            r"какой\s+(?:сегодня\s+)?день",
+            r"текущая\s+дата",
+            r"какое\s+число",
+        ],
+        "weather": [
+            r"(?:какая|как|скажи|покажи)?\s*погода",
+            r"прогноз\s+погоды",
+            r"температура\s+(?:на\s+улице|сегодня)",
+        ],
+        "calc": [
+            r"посчитай\s+(.+)",
+            r"вычисли\s+(.+)",
+            r"сколько\s+будет\s+([\d\s\+\-\*\/\(\)\.]+)",
+            r"calculate\s+(.+)",
+        ],
+        "create_file": [
+            r"(?:создай|сделай)\s+файл\s+(.+)",
+            r"сделай\s+файл\s+(.+)",
+            r"create\s+file\s+(.+)",
+        ],
+        "search": [
+            r"(?:найди|ищи|поищи)\s+(.+)",
+            r"поищи\s+(.+)",
+            r"поиск\s+(.+)",
+            r"что\s+такое\s+(.+)",
+        ],
+        "run": [
+            r"выполни\s+(.+)",
+            r"запусти\s+(.+)",
+            r"команда\s+(.+)",
+        ],
+        "note_add": [
+            r"запомни\s+(?:что\s+)?(.+)",
+            r"сохрани\s+заметку[:\s]+(.+)",
+            r"заметка[:\s]+(.+)",
+        ],
+        "note_list": [
+            r"(?:покажи|список)\s+заметки?",
+            r"мои\s+заметки",
+        ],
+        "help": [
+            r"помощь|помоги|help",
+            r"help",
+        ],
+        "ask_kb": [
+            r"(?:что\s+говорится\s+в\s+документах|найди\s+в\s+базе|спроси\s+базу)\s+(.+)",
+            r"вопрос\s+по\s+файлам\s+(.+)",
+        ],
+        "stats": [
+            r"статистика",
+            r"мои\s+данные",
+        ],
     }
-}
+
+    def parse(self, text: str):
+        """Return (tool_name, argument) or (None, None)."""
+        text_lower = text.lower().strip()
+        for tool_name, patterns in self.PATTERNS.items():
+            for pattern in patterns:
+                match = re.search(pattern, text_lower)
+                if match:
+                    arg = match.group(1).strip() if match.lastindex else None
+                    log_debug(f"Pattern matched: tool={tool_name}, arg={arg}")
+                    return tool_name, arg
+        return None, None
+
 
 class Brain:
+    """Core reasoning module for IDA."""
+
     def __init__(self, memory: dict):
         self.memory = memory
         self.conversation_history = []
+        self.parser = CommandParser()
         self.client = None
-        self.language = memory.get('language', 'ru')  # Default to Russian
-    
-    def set_language(self, language: str):
-        """Set the language for responses. Supported: 'ru', 'sah', 'en'"""
-        if language in LANGUAGE_PROMPTS:
-            self.language = language
-            log_info(f"Language set to: {language}")
-        else:
-            log_warning(f"Language '{language}' not supported. Using Russian.")
-            self.language = 'ru'
-    
-    def _get_prompt(self, key: str, **kwargs) -> str:
-        """Get localized prompt string"""
-        prompts = LANGUAGE_PROMPTS.get(self.language, LANGUAGE_PROMPTS['ru'])
-        template = prompts.get(key, '')
-        return template.format(**kwargs) if kwargs else template
+        self.groq_client = None
+        self.use_groq = False
 
-    def _get_client(self):
-        if self.client is None:
+        # Try Groq first (free and fast)
+        groq_key = os.getenv("GROQ_API_KEY", "")
+        if _groq_available and groq_key:
             try:
-                from openai import OpenAI
-                api_key = OPENAI_API_KEY or os.getenv("OPENAI_API_KEY", "")
-                api_base = OPENAI_API_BASE or os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
-                if api_key:
-                    self.client = OpenAI(api_key=api_key, base_url=api_base)
+                self.groq_client = Groq(api_key=groq_key)
+                self.use_groq = True
+                log_info("Groq client initialized (free LLM)")
             except Exception as e:
-                log_error("Failed to init OpenAI client", e)
-        return self.client
+                log_error("Failed to initialize Groq client", e)
+                self.use_groq = False
 
-    def generate_thought(self, user_input: str) -> str:
-        """Generate a reasoning chain before acting."""
-        prompt = self._get_prompt('thought', input=user_input)
-        return self._get_llm_response(prompt, temperature=0.2)
+        # Fallback to OpenAI
+        if not self.use_groq and _openai_available:
+            api_key = OPENAI_API_KEY or os.getenv("OPENAI_API_KEY", "")
+            api_base = OPENAI_API_BASE or os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
+            if api_key:
+                try:
+                    self.client = OpenAI(api_key=api_key, base_url=api_base)
+                    log_info(f"OpenAI client initialized (model: {LLM_MODEL})")
+                except Exception as e:
+                    log_error("Failed to initialize OpenAI client", e)
+            else:
+                log_warning("No LLM API keys set — using rule-based fallback")
 
-    def generate_response(self, user_input: str, tool_result=None, thought=None) -> str:
-        client = self._get_client()
-        if not client:
-            return self._get_prompt('api_error')
-            
-        system_prompt = self._get_prompt('system')
-        if thought and isinstance(thought, str) and thought.strip():
-            system_prompt += f"\nТвой внутренний анализ: {thought}"
-            
-        messages = [{"role": "system", "content": system_prompt}]
-        
-        # Safe history access
-        history = self.conversation_history or []
-        for entry in history[-CONTEXT_WINDOW:]:
-            if entry.get("user") and entry.get("response"):
+    def decide_tool(self, text: str):
+        return self.parser.parse(text)
+
+    def generate_response(self, user_input: str, tool_result=None) -> str:
+        text_lower = user_input.lower()
+
+        # Help
+        if any(w in text_lower for w in ["помощь", "помоги", "что ты умеешь", "команды", "help"]):
+            return self._get_help_message()
+
+        # Greeting
+        if re.search(r"\b(привет|хай|здравствуй|hello|hi|hey)\b", text_lower):
+            name = self.memory.get("name")
+            greeting = f", {name}!" if name else "!"
+            return f"Привет{greeting} Я IDA v4.0. Чем могу помочь? 👋"
+
+        # Remember name
+        m = re.search(r"меня зовут\s+(\S+)", text_lower)
+        if m:
+            name = m.group(1).capitalize()
+            self.memory["name"] = name
+            return f"Отлично, запомнил: **{name}** Рад познакомиться!"
+
+        # What is my name
+        if re.search(r"как\s+меня\s+зовут", text_lower):
+            name = self.memory.get("name")
+            return f"Тебя зовут **{name}**" if name else "Я пока не знаю твоё имя. Скажи: «Меня зовут [имя]»"
+
+        # Tool result
+        if tool_result is not None:
+            if self.client:
+                prompt = f"Пользователь спросил: «{user_input}». Результат: {tool_result}. Прокомментируй кратко и дружелюбно."
+                return self._get_llm_response(prompt)
+            return str(tool_result)
+
+        # LLM
+        if self.client:
+            return self._get_llm_response(user_input)
+
+        return "Я пока не понимаю это. Напиши «помощь» для списка команд."
+
+    def add_to_history(self, user_input: str, response: str):
+        self.conversation_history.append({"user": user_input, "response": response})
+
+    def get_history(self):
+        return self.conversation_history
+
+    def _get_llm_response(self, user_input: str) -> str:
+        try:
+            system_prompt = (
+                f"Ты — IDA (Инновационный динамический помощник) v4.0. "
+                f"Отвечай по-русски, кратко и дружелюбно. "
+                f"Имя пользователя: {self.memory.get('name', 'неизвестно')}."
+            )
+            messages = [{"role": "system", "content": system_prompt}]
+            for entry in self.conversation_history[-CONTEXT_WINDOW:]:
                 messages.append({"role": "user", "content": entry["user"]})
                 messages.append({"role": "assistant", "content": entry["response"]})
+            messages.append({"role": "user", "content": user_input})
+
+            # Use Groq if available
+            if self.use_groq and self.groq_client:
+                response = self.groq_client.chat.completions.create(
+                    model="mixtral-8x7b-32768",
+                    messages=messages,
+                    temperature=0.7,
+                    max_tokens=1024,
+                )
+            # Fallback to OpenAI
+            elif self.client:
+                response = self.client.chat.completions.create(
+                    model=LLM_MODEL,
+                    messages=messages,
+                    temperature=LLM_TEMPERATURE,
+                    max_tokens=LLM_MAX_TOKENS,
+                )
+            else:
+                return "Нет доступных LLM сервисов."
             
-        if tool_result:
-            messages.append({"role": "system", "content": f"Данные от инструментов: {tool_result}"})
-            
-        messages.append({"role": "user", "content": user_input})
-        
-        try:
-            response = client.chat.completions.create(
-                model=LLM_MODEL,
-                messages=messages,
-                temperature=LLM_TEMPERATURE,
-                max_tokens=LLM_MAX_TOKENS
-            )
             if response and response.choices:
-                content = response.choices[0].message.content
-                if content and content.strip():
-                    return content.strip()
-            
-            # If empty, try a simpler prompt
-            log_warning("LLM returned empty response, retrying with simple prompt...")
-            simple_resp = self._get_llm_response(f"Answer the user's question: {user_input}")
-            if simple_resp and simple_resp.strip():
-                return simple_resp
-            
-            # Final fallback for OS stability
-            if "новости" in user_input.lower() or "news" in user_input.lower():
-                return self._get_prompt('news_fallback')
-            return self._get_prompt('empty_response')
-            
+                return response.choices[0].message.content.strip()
+            return "Извини, не смог получить ответ."
         except Exception as e:
-            log_error("LLM Generation failed", e)
-            return self._get_prompt('llm_error', error=str(e))
+            log_error("LLM Error", e)
+            return f"Ошибка LLM: {str(e)}"
 
-    def _get_llm_response(self, prompt: str, temperature=0.7) -> str:
-        client = self._get_client()
-        if not client: return ""
-        try:
-            log_debug(f"LLM Request Prompt: {prompt[:100]}...")
-            response = client.chat.completions.create(
-                model=LLM_MODEL,
-                messages=[{"role": "user", "content": prompt}]
-            )
-            if response and response.choices:
-                content = response.choices[0].message.content
-                if content:
-                    log_debug(f"LLM Response: {content[:100]}...")
-                    return content.strip()
-            log_warning("LLM returned empty choices or content")
-            return ""
-        except Exception as e:
-            log_error("LLM Call failed", e)
-            return ""
+    def _get_help_message(self) -> str:
+        return """Доступные команды IDA v4.0:
 
-    def get_embedding(self, text: str) -> list:
-        """Generate embedding for a given text."""
-        client = self._get_client()
-        if not client: return []
-        try:
-            response = client.embeddings.create(
-                input=text,
-                model=EMBEDDING_MODEL
-            )
-            return response.data[0].embedding
-        except Exception as e:
-            # Fallback: Return a pseudo-random embedding based on text hash if API fails
-            log_warning(f"Embeddings API not available. Using fallback mechanism.")
-            import hashlib
-            hash_val = int(hashlib.md5(text.encode()).hexdigest(), 16)
-            pseudo_vec = [(hash_val >> i) & 1 for i in range(1536)]
-            return [float(x) for x in pseudo_vec]
+Время и дата:
+  - «Какое время?» — текущее время
+  - «Какая дата?» — текущая дата
 
-    def decide_tool(self, user_input: str) -> tuple:
-        """Decide which tool to use and extract arguments."""
-        prompt = self._get_prompt('tool_decision', input=user_input)
-        response = self._get_llm_response(prompt, temperature=0)
-        try:
-            import json
-            data = json.loads(response)
-            return data.get("tool"), data.get("arg")
-        except:
-            return None, None
+Погода:
+  - «Какая погода?» — текущая погода
 
-    def add_to_history(self, user: str, response: str):
-        self.conversation_history.append({"user": user, "response": response})
+Калькулятор:
+  - «Посчитай 15 * 7 + 3» — результат
+
+Файлы:
+  - «Создай файл notes.txt» — создать файл
+
+Поиск:
+  - «Найди Python туториал» — поиск
+
+Заметки:
+  - «Запомни купить молоко» — сохранить заметку
+  - «Покажи заметки» — список заметок
+
+Команды:
+  - «Выполни ls» — безопасная команда
+
+Личное:
+  - «Меня зовут [имя]» — сохранить имя
+  - «Как меня зовут?» — узнать имя
+
+Прочее:
+  - «Статистика» — данные о сессии
+  - «Выход» / «quit» — завершить работу"""

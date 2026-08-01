@@ -1,260 +1,246 @@
-# 🤖 AI IDA v3.6 — IDA AI Dashboard
+# 🤖 IDA — Инновационный динамический помощник v4.0
 
-[![Python](https://img.shields.io/badge/Python-3.11+-blue?logo=python)](https://python.org)
-[![React](https://img.shields.io/badge/React-19-blue?logo=react)](https://react.dev)
-[![tRPC](https://img.shields.io/badge/tRPC-11-purple?logo=trpc)](https://trpc.io)
-[![Expo](https://img.shields.io/badge/Expo-Router-purple?logo=expo)](https://expo.dev)
+[![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python)](https://python.org)
+[![React Native](https://img.shields.io/badge/React_Native-Expo-purple?logo=expo)](https://expo.dev)
+[![Groq API](https://img.shields.io/badge/Groq-API-orange)](https://groq.com)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![Open Source](https://img.shields.io/badge/Open_Source-100%25-orange)](https://github.com/fightmeb1tch99-ux/SYP-PROJECT)
 
-**AI IDA v3.6** — полнофункциональный AI-ассистент с киберпанк-дизайном.  
-Веб-Dashboard на React + tRPC с реальной интеграцией OpenAI GPT, потоковой передачей ответов, голосовой визуализацией, анимированной нейросетью и мультиязычностью (Русский, Якутский, English).
+**IDA v4.0** — умный AI-агент на Python с мобильным приложением на React Native.  
+Интегрируется с **Groq API** (бесплатный LLM), умеет отвечать на вопросы, считать, показывать погоду, сохранять заметки и многое другое.
 
-**🌐 Live Demo**: https://idadash-fctjccqe.manus.space  
-**📅 Последнее обновление**: 6 июля 2026 (v3.6)  
-**⭐ Версия**: 3.6 (Streaming Edition)
+**Создатель:** Григорьев Айтал Григорьевич (@Mareioak)
 
 ---
 
-## ✨ Возможности AI IDA v3.6
+## ✨ Что умеет IDA v4.0
 
-| Функция | Статус | Описание |
+| Команда | Пример | Описание |
 |---|---|---|
-| 💬 Реальный GPT Чат | ✅ | Потоковая передача ответов в реальном времени |
-| 📊 Dashboard | ✅ | VS Code-стиль интерфейс с метриками и статистикой |
-| 🎤 Голосовая визуализация | ✅ | Спектр-анализатор, реагирующий на голос в реальном времени |
-| 🧠 Нейросеть анимация | ✅ | Интерактивная визуализация развития нейросети с пульсирующими нейронами |
-| 📜 История чатов | ✅ | Сохранение и управление прошлыми разговорами |
-| ⚙️ Управление плагинами | ✅ | Weather, Browser, Calculator с включением/отключением |
-| 🌍 Мультиязычность | ✅ | Русский, Якутский (Sakha), English |
-| 🔐 Аутентификация | ✅ | Email/Пароль вход, регистрация, Demo режим (30 мин) |
-| 📱 Мобильная оптимизация | ✅ | Полная адаптивность для Termux и мобильных браузеров |
-| 🎨 Киберпанк дизайн | ✅ | Тёмная тема с неон-эффектами (#3b82f6, #06b6d4) и микроанимациями |
+| Время | `Какое время?` | Текущее время |
+| Дата | `Какая дата?` | Текущая дата |
+| Погода | `Какая погода?` | Погода через wttr.in (без ключа) |
+| Калькулятор | `Посчитай 15 * 7 + 3` | Безопасное вычисление |
+| Заметки | `Запомни купить молоко` | Сохранение заметок |
+| Поиск | `Найди Python туториал` | DuckDuckGo поиск |
+| Файлы | `Создай файл notes.txt` | Создание файлов |
+| Команды | `Выполни ls` | Безопасные shell-команды |
+| Личное | `Меня зовут Айтал` | Запоминание имени |
+| Голос | `Редактор` или `Editor` | Интерактивный редактор кода |
+| LLM | Любой вопрос | **Groq API** ответ (бесплатно!) |
+
+### 🎉 Новое в v4.0
+
+- ✅ **Groq API** — Бесплатный и быстрый LLM вместо OpenAI
+- ✅ **ASCII загрузка** — Красивая анимация пончика в Termux
+- ✅ **Редактор кода** — Пишите код прямо в консоли
+- ✅ **Голосовой помощник** — Распознавание и синтез речи
+- ✅ **Мобильное приложение** — React Native + Expo с темной темой
+- ✅ **Веб-страница** — Красивый лэндинг для браузера
+- ✅ **Проверка стиля** — Clang Format, ESLint, Pylint
+- ✅ **Полная документация** — На русском, якутском и английском
 
 ---
 
 ## 🚀 Быстрый старт
 
-### Веб-версия (рекомендуется)
+### На Android (Termux)
 
-Просто откройте в браузере:
-```
-https://idadash-fctjccqe.manus.space
-```
-
-Нажмите **"🎮 Попробовать Demo"** для временного доступа без регистрации!
-
-### Локальная установка
-
-#### 1. Клонировать репозиторий
 ```bash
-git clone https://github.com/fightmeb1tch99-ux/SYP-PROJECT
-cd SYP-PROJECT
-```
+# 1. Установи зависимости
+pkg install python git -y
+pip install groq
 
-#### 2. Установить зависимости
+# 2. Клонируй проект
+git clone https://github.com/fightmeb1tch99-ux/SYP-PROJECT IDA
+cd IDA
+git checkout dev
 
-**Node.js frontend:**
-```bash
-cd ida-dashboard
-pnpm install
-```
+# 3. Установи Groq API ключ
+export GROQ_API_KEY="gsk_..."
 
-**Python backend (опционально):**
-```bash
-pip install -r requirements.txt
-```
-
-#### 3. Настроить API ключ
-```bash
-cp .env.example .env
-# Отредактируй .env и вставь свой OPENAI_API_KEY
-```
-
-#### 4. Запустить
-
-**Web Dashboard:**
-```bash
-cd ida-dashboard
-pnpm dev
-# Откроется на http://localhost:3000
-```
-
-**Python backend (опционально):**
-```bash
+# 4. Запусти IDA
 python3 main.py
+```
+
+### На ПК (Windows/macOS/Linux)
+
+```bash
+# 1. Установи Python 3.9+
+# https://www.python.org/downloads/
+
+# 2. Клонируй проект
+git clone https://github.com/fightmeb1tch99-ux/SYP-PROJECT IDA
+cd IDA
+git checkout dev
+
+# 3. Установи зависимости
+pip install -r requirements.txt
+
+# 4. Установи Groq API ключ
+export GROQ_API_KEY="gsk_..."
+
+# 5. Запусти IDA
+python3 main.py
+```
+
+### Запуск IDA
+
+```bash
+# Интерактивный режим
+python3 main.py
+
+# Одна команда
+python3 main.py "Какое время?"
+
+# Справка
+python3 main.py --help
+
+# Статистика
+python3 main.py --stats
 ```
 
 ---
 
 ## 📱 Мобильное приложение
 
-### Expo Go (самый простой способ)
-
-1. Установите **Expo Go** из Google Play Store
-2. Отсканируйте QR-код проекта `ida-app`
-3. Приложение загрузится и запустится на вашем телефоне
-
-### Локальная установка
-
 ```bash
-cd ida-app
+cd mobile-app
 npm install
-npx expo start
+npm start
 ```
+
+Откроется QR-код — сканируй в приложении **Expo Go** на телефоне.
+
+### Возможности мобильного приложения
+
+- 🎨 Темная тема (futuristic design)
+- 🎤 Голосовой помощник с анимацией
+- ⚡ Быстрые команды
+- 💾 Сохранение истории чатов
+- 🌙 Переключатель темы
 
 ---
 
-## 🏗 Архитектура
+## 🌐 Веб-страница
 
-```
-AI IDA v3.6
-├── Frontend (React 19 + Tailwind 4)
-│   ├── Dashboard (VS Code-стиль с киберпанк-дизайном)
-│   ├── Chat (потоковая передача GPT, 10ms/символ)
-│   ├── Voice Visualizer (спектр-анализатор, реагирует на голос)
-│   ├── Neural Network (анимированная нейросеть с пульсирующими нейронами)
-│   ├── History (сохранение и управление чатами)
-│   ├── Plugins (Weather, Browser, Calculator)
-│   └── Settings (языки, модели, API ключ)
-├── Backend (Express 4 + tRPC 11)
-│   ├── OpenAI GPT интеграция с обработкой ошибок
-│   ├── Аутентификация (Email/Пароль, Demo режим)
-│   ├── Chat API с потоковой передачей
-│   ├── Мультиязычность (i18n)
-│   └── Валидация через Zod
-├── Mobile (Expo Router + React Native)
-│   └── Полная синхронизация с Web Dashboard
-└── Python Backend (опционально)
-    ├── Оркестратор агентов
-    ├── Плагины (Weather, Browser, Calculator)
-    └── Система памяти (SQLite)
-```
+Открой `landing.html` в браузере для красивого лэндинга проекта.
 
 ---
 
 ## 🗂 Структура проекта
 
 ```
-SYP-PROJECT/
-├── ida-dashboard/       # 🌐 Web Dashboard (React + tRPC)
-│   ├── client/          # React 19 фронтенд с киберпанк-дизайном
-│   │   ├── src/pages/   # Dashboard, Chat, History, Plugins, Settings, Voice, Neural
-│   │   ├── src/components/ # DashboardLayout, VoiceVisualizer, etc
-│   │   └── src/index.css   # Киберпанк-стили (#0a0e1a, #3b82f6, #06b6d4)
-│   ├── server/          # Express 4 + tRPC бэкенд
-│   │   ├── chat.ts      # OpenAI GPT интеграция
-│   │   ├── routers.ts   # tRPC процедуры
-│   │   └── auth.ts      # Аутентификация
-│   ├── drizzle/         # БД схема и миграции
-│   └── package.json
-├── ida-app/             # 📱 Мобильное приложение (Expo Router)
-├── mobile-app/          # 📱 Legacy мобильное приложение
-├── core/                # 🐍 Python backend
-│   ├── main.py          # Точка входа
-│   ├── brain.py         # NLP, парсинг, мультиязычность
-│   ├── orchestrator.py  # Оркестратор агентов
-│   └── ...
-├── plugins/             # 🔌 Плагины (Weather, Browser, etc)
-├── .env.example         # Шаблон переменных окружения
-├── requirements.txt     # Python зависимости
-├── Dockerfile           # Docker контейнеризация
-├── docker-compose.yml   # Docker Compose (backend + frontend + db)
-├── test_brain_multilingual.py  # Тесты (80%+ покрытие)
-├── WEB_DASHBOARD_README.md     # Документация Dashboard
-└── README.md            # Этот файл
+IDA/
+├── main.py                  # Точка входа, оркестратор
+├── brain.py                 # NLP, парсинг команд, LLM (Groq)
+├── groq_client.py           # Groq API клиент
+├── config.py                # Все настройки
+├── logger.py                # Логирование
+├── ida_system.py            # Системные инструменты
+├── tools/
+│   └── tools.py             # Инструменты: время, погода, калькулятор...
+├── memory/
+│   └── memory.json          # Постоянная память агента
+├── landing.html             # Лендинг-страница
+├── mobile-app/              # React Native приложение (Expo)
+├── README_V4.md             # Полная документация v4.0
+├── README_RU.md             # README на русском
+├── README_SAH.md            # README на якутском
+├── .env.example             # Шаблон переменных окружения
+├── requirements.txt         # Python зависимости
+└── README.md                # Этот файл
 ```
 
 ---
 
-## ⚙️ Настройка
+## ⚙️ Настройка (config.py)
 
-| Параметр | Где | Описание |
+| Параметр | По умолчанию | Описание |
 |---|---|---|
-| `OPENAI_API_KEY` | `.env` | Ваш OpenAI API ключ (обязателен) |
-| `LLM_MODEL` | Settings | Выбор модели (GPT-4o, GPT-4o-mini) |
-| `TEMPERATURE` | Settings | Температура генерации (0-1) |
-| `LANGUAGE` | Settings | Язык интерфейса (Русский/Якутский/English) |
-| `DATABASE_URL` | `.env` | MySQL/TiDB строка подключения |
-| `JWT_SECRET` | `.env` | Секрет для сессий |
+| `LLM_MODEL` | `mixtral-8x7b-32768` | Модель Groq |
+| `LLM_TEMPERATURE` | `0.7` | Температура генерации |
+| `CONTEXT_WINDOW` | `10` | Сколько сообщений помнит LLM |
+| `ENABLE_WEATHER` | `True` | Погода через wttr.in |
+| `ENABLE_CALCULATOR` | `True` | Встроенный калькулятор |
+| `ENABLE_NOTES` | `True` | Система заметок |
+| `GROQ_API_KEY` | `env` | Ключ Groq API |
 
 ---
 
 ## 🔒 Безопасность
 
-- 🔐 **OAuth 2.0** — Manus OAuth интеграция
-- 🔑 **JWT токены** — безопасные сессии с подписью
-- 🛡️ **HTTPS** — все соединения зашифрованы
-- ✅ **Валидация входа** — Zod схемы для всех API запросов
-- 🚫 **Rate limiting** — защита от DDoS и брутфорса
-- 📝 **Логирование** — все действия записываются в логи
-- 🔒 **API ключи в .env** — никогда не попадают в git
+- **Whitelist команд** — только разрешённые shell-команды (`ls`, `pwd`, `date` и др.)
+- **Path traversal защита** — нельзя создать файл за пределами `created_files/`
+- **Безопасный eval** — калькулятор использует ограниченный eval без builtins
+- **Валидация ввода** — максимальная длина сообщения 4096 символов
+- **.env для секретов** — API-ключи никогда не попадают в git
+- **Защита от инъекций** — Groq API защищен от prompt injection
+
+---
+
+## 🎮 Будущие обновления
+
+### v5.0 - Minecraft Integration
+- 🎮 Встроенная игра Minecraft
+- 🏗️ Строительство и исследование
+- 💬 Общение с ИИ во время игры
+- 🎨 Кастомные текстуры
+
+**Ветка:** `feature/minecraft-game`
+
+### v6.0 - Terraria Integration
+- 🎮 Встроенная игра Terraria
+- ⚔️ Боевая система
+- 🎁 Система предметов
+- 🗺️ Процедурная генерация миров
+
+**Ветка:** `feature/terraria-game`
+
+### v7.0 - Multiplayer
+- 👥 Сетевая игра
+- 🌐 Облачное хранилище
+- 🏆 Рейтинги и достижения
+- 💬 Чат между игроками
+
+**Ветка:** `feature/multiplayer`
+
+---
+
+## 🌳 Структура веток
+
+| Ветка | Описание | Статус |
+|-------|---------|--------|
+| `main` | Стабильная версия для продакшена | ✅ Активна |
+| `dev` | Текущая разработка (v4.0) | ✅ Активна |
+| `feature/minecraft-game` | Интеграция Minecraft (v5.0) | 🔄 В разработке |
+| `feature/terraria-game` | Интеграция Terraria (v6.0) | 📋 Планируется |
+| `feature/multiplayer` | Многопользовательская игра (v7.0) | 📋 Планируется |
 
 ---
 
 ## 📚 Документация
 
-- 📖 [Web Dashboard README](WEB_DASHBOARD_README.md)
-- 🎨 [Design System](references/design-system.md)
-- 🔌 [Backend Integration](references/backend-integration.md)
-- 🌍 [Multilingual Support](references/multilingual-implementation.md)
-- 🐳 [Docker Setup](references/docker-setup.md)
-- 📊 [Roadmap](ROADMAP.md)
-
----
-
-## 🧪 Тестирование
-
-Запустить тесты:
-```bash
-# Web Dashboard
-cd ida-dashboard
-pnpm test
-
-# Python backend
-python -m pytest test_brain_multilingual.py -v
-```
-
-Покрытие: **80%+** ✅
-
----
-
-## 🐳 Docker
-
-Запустить всё в Docker:
-```bash
-docker-compose up
-```
-
-Это запустит:
-- Web Dashboard на `http://localhost:3000`
-- Python backend на `http://localhost:5000`
-- MySQL БД на `localhost:3306`
-
----
-
-## 📊 Версионирование
-
-| Версия | Дата | Что нового |
-|---|---|---|
-| v3.6 | 6 июля 2026 | Потоковая передача ответов, исправление багов для Termux |
-| v3.5 | 6 июля 2026 | OpenAI API интеграция, Demo режим, мобильная оптимизация |
-| v3.0 | 5 июля 2026 | Web Dashboard с киберпанк-дизайном, 7 страниц функционала |
-| v2.0 | 2026 | Python backend, мобильное приложение |
+- [README (English)](README.md) — этот файл
+- [README (Русский)](README_RU.md) — на русском языке
+- [README (Саха)](README_SAH.md) — на якутском языке
+- [Полная документация v4.0](README_V4.md) — все детали
+- [Гайд по установке](INSTALLATION_GUIDE.md) — пошаговая инструкция
+- [История улучшений](IMPROVEMENTS.md) — что было сделано
 
 ---
 
 ## 👤 Автор
 
-**Григорьев Айтал Григорьевич** ([@fightmeb1tch99-ux](https://github.com/fightmeb1tch99-ux))  
-Создано с ❤️ для Якутии
+**Григорьев Айтал Григорьевич** ([@Mareioak](https://github.com/fightmeb1tch99-ux))  
+Создано с ❤️ для Nothing Phone 2
 
 ---
 
-## 📄 Лицензия
+## 📝 Лицензия
 
 MIT License — свободно используй в своих проектах!
 
 ---
 
-*AI IDA v3.6 — 6 июля 2026*
+*IDA v4.0 — 2026*
