@@ -1,174 +1,281 @@
+#!/usr/bin/env python3
 """
-IDA AI Agent v4.0 — Main entry point.
-Инновационный динамический помощник.
+AI Camera Brain - Intelligent Vision and Learning System
+Uses webcam feed, local OpenCV processing, and free/open AI APIs (or OpenAI-compatible endpoints)
+to analyze frames, detect objects, learn from observations, and build long-term memory.
 """
 
-import sys
 import os
+import sys
+import time
+import json
+import base64
+import argparse
+from datetime import datetime
+import cv2
+import numpy as np
+import requests
+from dotenv import load_dotenv
+from colorama import init, Fore, Style
 
-from logger import log_info, log_error, log_warning, log_debug
-from brain import Brain
-from memory_manager import MemoryManager
-from tools.tools import TOOLS
-from ui import DonutLoader, CodeEditor, TermuxUI
+init(autoreset=True)
+load_dotenv()
 
-# Claude Code style colors
-class Colors:
-    CYAN = '\033[96m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-    END = '\033[0m'
-    GRAY = '\033[90m'
+MEMORY_FILE = "camera_memory.json"
+CONFIG_FILE = "config.json"
 
-ASCII_LOGO = f"""
-{Colors.CYAN}{Colors.BOLD}
-  ██╗██████╗  █████╗ 
-  ██║██╔══██╗██╔══██╗
-  ██║██║  ██║███████║
-  ██║██║  ██║██╔══██║
-  ██║██████╔╝██║  ██║
-  ╚═╝╚═════╝ ╚═╝  ╚═╝
-{Colors.END}{Colors.GRAY}  Инновационный Динамический Помощник v4.0{Colors.END}
-"""
+DEFAULT_CONFIG = {
+    "api_url": os.getenv("AI_API_URL", "https://api.openai.com/v1"),
+    "api_key": os.getenv("AI_API_KEY", "your_free_or_proxy_api_key_here"),
+    "model": os.getenv("AI_MODEL", "gpt-4o-mini"),
+    "capture_interval": 5,  # seconds between AI analysis frames
+    "camera_index": 0,
+    "confidence_threshold": 0.5
+}
 
-class AIAgent:
-    """Main AI Agent orchestrator."""
+class CameraMemory:
+    """Manages long-term learning and memory of observations."""
+    def __init__(self, filepath=MEMORY_FILE):
+        self.filepath = filepath
+        self.memory = self.load()
 
-    def __init__(self):
-        log_info("Initializing IDA AI Agent v4.0...")
-        DonutLoader.show_loading("Инициализация IDA", 2.0)
-        self.memory_manager = MemoryManager()
-        self.brain = Brain(self.memory_manager.memory)
-        log_info("IDA AI Agent initialized successfully")
+    def load(self):
+        if os.path.exists(self.filepath):
+            try:
+                with open(self.filepath, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except Exception as e:
+                print(f"{Fore.YELLOW}[Warning] Could not load memory: {e}. Starting fresh.")
+        return {"observations": [], "learned_objects": {}, "total_sessions": 0}
 
-    def process_input(self, user_input: str) -> str:
-        """Process user input and return a response."""
-        if not user_input or not isinstance(user_input, str):
-            return f"{Colors.RED}Ошибка: некорректный ввод{Colors.END}"
-        user_input = user_input.strip()
-        if not user_input:
-            return f"{Colors.YELLOW}Пожалуйста, напиши что-нибудь{Colors.END}"
-        if len(user_input) > 4096:
-            return f"{Colors.RED}Ошибка: сообщение слишком длинное{Colors.END}"
-
-        log_debug(f"Processing: {user_input[:80]}")
-
-        # Decide tool
-        tool_name, arg = self.brain.decide_tool(user_input)
-        tool_result = None
-
-        if tool_name:
-            if tool_name == "stats":
-                stats = self.memory_manager.get_stats()
-                lines = [f"{Colors.BOLD}Статистика IDA:{Colors.END}"]
-                for k, v in stats.items():
-                    lines.append(f"  {Colors.GRAY}{k}:{Colors.END} {v}")
-                tool_result = "\n".join(lines)
-            elif tool_name in TOOLS:
-                try:
-                    tool_fn = TOOLS[tool_name]
-                    tool_result = tool_fn(arg) if arg is not None else tool_fn()
-                    log_info(f"Tool executed: {tool_name}")
-                except Exception as e:
-                    log_error(f"Tool execution failed: {tool_name}", e)
-                    tool_result = f"{Colors.RED}Ошибка инструмента: {str(e)}{Colors.END}"
-
-        response = self.brain.generate_response(user_input, tool_result)
-        self.brain.add_to_history(user_input, response)
-        self.memory_manager.increment_interactions()
-        self.memory_manager.save()
-        return response
-
-    def run_interactive(self):
-        """Run the agent in interactive (REPL) mode."""
-        print(ASCII_LOGO)
-        print(f"{Colors.GRAY}Напиши {Colors.END}{Colors.BOLD}«помощь»{Colors.END}{Colors.GRAY} для списка команд{Colors.END}")
-        print(f"{Colors.GRAY}Напиши {Colors.END}{Colors.BOLD}«выход»{Colors.END}{Colors.GRAY} для завершения{Colors.END}")
-        print()
-        log_info("IDA started in interactive mode")
-
+    def save(self):
         try:
-            while True:
-                try:
-                    # Claude-like prompt
-                    user_input = input(f"{Colors.CYAN}{Colors.BOLD}╭─ Ты{Colors.END}\n{Colors.CYAN}{Colors.BOLD}╰─> {Colors.END}").strip()
-                    
-                    if not user_input:
-                        continue
-                    if user_input.lower() in ("выход", "quit", "exit", "bye", "пока"):
-                        print(f"\n{Colors.GRAY}IDA: До свидания! 👋{Colors.END}")
-                        log_info("User exited")
-                        break
-                    if user_input.lower() in ("редактор", "editor", "код", "code"):
-                        print(f"\n{Colors.YELLOW}Открываю редактор кода...{Colors.END}")
-                        DonutLoader.show_loading("Инициализация редактора", 1.5)
-                        editor = CodeEditor("my_code.py")
-                        editor.run_editor()
-                        continue
-                    
-                    response = self.process_input(user_input)
-                    
-                    # Claude-like response styling
-                    print(f"\n{Colors.GREEN}{Colors.BOLD}IDA{Colors.END}")
-                    print(f"{response}\n")
-                    
-                except KeyboardInterrupt:
-                    print(f"\n\n{Colors.GRAY}IDA: До встречи! 👋{Colors.END}")
-                    log_warning("Interrupted by user")
-                    break
-                except Exception as e:
-                    log_error("Interactive loop error", e)
-                    print(f"{Colors.RED}IDA: Произошла ошибка: {str(e)}{Colors.END}\n")
-        finally:
-            self._save_and_exit()
-
-    def run_single(self, user_input: str) -> str:
-        """Process a single input (non-interactive mode)."""
-        response = self.process_input(user_input)
-        print(f"{Colors.GREEN}{Colors.BOLD}IDA:{Colors.END} {response}")
-        self.memory_manager.save()
-        return response
-
-    def show_stats(self):
-        """Print memory statistics."""
-        stats = self.memory_manager.get_stats()
-        print(f"\n{Colors.BOLD}Статистика IDA:{Colors.END}")
-        for key, value in stats.items():
-            print(f"  {Colors.GRAY}{key}:{Colors.END} {value}")
-        print()
-
-    def show_help(self):
-        """Print help message."""
-        print(self.brain.generate_response("помощь"))
-
-    def _save_and_exit(self):
-        try:
-            self.memory_manager.save()
-            log_info("Memory saved on exit")
+            with open(self.filepath, 'w', encoding='utf-8') as f:
+                json.dump(self.memory, f, ensure_ascii=False, indent=2)
         except Exception as e:
-            log_error("Failed to save memory on exit", e)
+            print(f"{Fore.RED}[Error] Could not save memory: {e}")
+
+    def add_observation(self, analysis_text, objects_list):
+        timestamp = datetime.now().isoformat()
+        entry = {
+            "timestamp": timestamp,
+            "analysis": analysis_text,
+            "objects": objects_list
+        }
+        self.memory["observations"].append(entry)
+        
+        # Keep only last 100 observations
+        if len(self.memory["observations"]) > 100:
+            self.memory["observations"] = self.memory["observations"][-100:]
+
+        for obj in objects_list:
+            obj_name = obj.lower().strip()
+            if obj_name in self.memory["learned_objects"]:
+                self.memory["learned_objects"][obj_name]["count"] += 1
+                self.memory["learned_objects"][obj_name]["last_seen"] = timestamp
+            else:
+                self.memory["learned_objects"][obj_name] = {
+                    "first_seen": timestamp,
+                    "last_seen": timestamp,
+                    "count": 1
+                }
+        self.save()
+
+
+class AICameraBrain:
+    def __init__(self, config):
+        self.config = config
+        self.memory = CameraMemory()
+        self.running = False
+        
+    def encode_frame_to_base64(self, frame):
+        success, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
+        if not success:
+            raise ValueError("Failed to encode frame to JPEG")
+        return base64.b64encode(buffer).decode('utf-8')
+
+    def analyze_frame_with_ai(self, frame):
+        """Sends frame to AI API for deep visual understanding and memory correlation."""
+        base64_image = self.encode_frame_to_base64(frame)
+        
+        url = f"{self.config['api_url'].rstrip('/')}/chat/completions"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.config['api_key']}"
+        }
+        
+        recent_learned = list(self.memory.memory["learned_objects"].keys())[-15:]
+        prompt = (
+            "You are the brain of an intelligent AI camera that sees and learns everything. "
+            "Analyze this camera frame. Provide a concise, insightful description of what is happening, "
+            "what objects/people/animals are visible, and any notable changes or activities. "
+            f"Previously learned objects memory (for context): {recent_learned}. "
+            "Respond strictly in JSON format with keys: "
+            "'description' (string summary of the scene), "
+            "'objects' (list of detected object strings)."
+        )
+
+        payload = {
+            "model": self.config["model"],
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{base64_image}"
+                            }
+                        }
+                    ]
+                }
+            ],
+            "max_tokens": 500,
+            "response_format": {"type": "json_object"}
+        }
+
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=20)
+            if response.status_code != 200:
+                return f"API Error ({response.status_code}): {response.text}", []
+            
+            res_json = response.json()
+            content = res_json['choices'][0]['message']['content']
+            data = json.loads(content)
+            return data.get("description", "No description"), data.get("objects", [])
+        except Exception as e:
+            return f"Analysis Exception: {str(e)}", []
+
+    def run(self):
+        print(f"{Fore.CYAN}=== AI CAMERA BRAIN INITIALIZING ===")
+        print(f"{Fore.GREEN}API URL: {self.config['api_url']}")
+        print(f"{Fore.GREEN}Model: {self.config['model']}")
+        print(f"{Fore.YELLOW}Opening camera index {self.config['camera_index']}...")
+
+        cap = cv2.VideoCapture(self.config['camera_index'])
+        if not cap.isOpened():
+            print(f"{Fore.RED}[Error] Could not open webcam (index {self.config['camera_index']}).")
+            print(f"{Fore.YELLOW}Tip: You can use a video file path or check camera permissions.")
+            return
+
+        self.running = True
+        self.memory.memory["total_sessions"] += 1
+        self.memory.save()
+
+        last_analysis_time = 0
+        current_description = "Initializing AI vision..."
+        detected_objects = []
+
+        print(f"{Fore.GREEN}Camera Brain is active! Press 'q' to quit, 's' to force snapshot analysis.")
+
+        try:
+            while self.running:
+                ret, frame = cap.read()
+                if not ret:
+                    print(f"{Fore.RED}[Error] Failed to grab frame from camera.")
+                    break
+
+                current_time = time.time()
+                # Run AI analysis at specified intervals
+                if current_time - last_analysis_time >= self.config['capture_interval']:
+                    last_analysis_time = current_time
+                    print(f"{Fore.BLUE}[AI Brain] Analyzing frame...")
+                    desc, objs = self.analyze_frame_with_ai(frame)
+                    current_description = desc
+                    detected_objects = objs
+                    self.memory.add_observation(desc, objs)
+                    print(f"{Fore.GREEN}[Observation] {desc}")
+                    print(f"{Fore.MAGENTA}[Detected Objects] {objs}\n")
+
+                # Overlay info on video frame
+                display_frame = frame.copy()
+                h, w, _ = display_frame.shape
+                
+                # Draw translucent status bar
+                overlay = display_frame.copy()
+                cv2.rectangle(overlay, (0, h - 80), (w, h), (0, 0, 0), -1)
+                alpha = 0.6
+                cv2.addWeighted(overlay, alpha, display_frame, 1 - alpha, 0, display_frame)
+
+                # Put description text
+                short_desc = current_description if len(current_description) < 80 else current_description[:77] + "..."
+                cv2.putText(display_frame, f"AI Vision: {short_desc}", (10, h - 50),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+                
+                objs_str = ", ".join(detected_objects[:6]) if detected_objects else "Scanning..."
+                cv2.putText(display_frame, f"Memory Objects: {objs_str}", (10, h - 20),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+
+                cv2.imshow("AI Camera Brain", display_frame)
+
+                key = cv2.waitKey(1) & 0xFF
+                if key == ord('q'):
+                    break
+                elif key == ord('s'):
+                    print(f"{Fore.YELLOW}[Manual Trigger] Forcing immediate AI analysis...")
+                    desc, objs = self.analyze_frame_with_ai(frame)
+                    current_description = desc
+                    detected_objects = objs
+                    self.memory.add_observation(desc, objs)
+                    print(f"{Fore.GREEN}[Manual Observation] {desc}\n")
+
+        finally:
+            cap.release()
+            cv2.destroyAllWindows()
+            print(f"{Fore.CYAN}=== AI CAMERA BRAIN SHUT DOWN ===")
+
+
+def load_config():
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                user_cfg = json.load(f)
+                cfg = DEFAULT_CONFIG.copy()
+                cfg.update(user_cfg)
+                return cfg
+        except Exception:
+            pass
+    return DEFAULT_CONFIG
+
 
 def main():
-    agent = AIAgent()
-    if len(sys.argv) > 1:
-        arg = sys.argv[1]
-        if arg in ("--help", "-h"):
-            agent.show_help()
-        elif arg == "--stats":
-            agent.show_stats()
-        elif arg == "--input":
-            if len(sys.argv) > 2:
-                agent.run_single(" ".join(sys.argv[2:]))
-            else:
-                print("Ошибка: --input требует аргумент")
-                sys.exit(1)
-        else:
-            agent.run_single(" ".join(sys.argv[1:]))
-    else:
-        agent.run_interactive()
+    parser = argparse.ArgumentParser(description="AI Camera Brain - Intelligent Vision and Learning System")
+    parser.add_argument("--camera", type=int, default=None, help="Camera device index")
+    parser.add_argument("--interval", type=int, default=None, help="Seconds between AI analysis")
+    parser.add_argument("--model", type=str, default=None, help="AI model name")
+    parser.add_argument("--setup", action="store_true", help="Interactive setup to configure API key")
+    args = parser.parse_args()
+
+    config = load_config()
+
+    if args.setup:
+        print(f"{Fore.CYAN}=== AI Camera Brain Interactive Setup ===")
+        api_url = input(f"Enter AI API URL [{config['api_url']}]: ").strip()
+        if api_url:
+            config['api_url'] = api_url
+        api_key = input(f"Enter AI API Key [{config['api_key'][:6]}...]: ").strip()
+        if api_key:
+            config['api_key'] = api_key
+        model = input(f"Enter Model Name [{config['model']}]: ").strip()
+        if model:
+            config['model'] = model
+            
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2)
+        print(f"{Fore.GREEN}Configuration saved to {CONFIG_FILE}!")
+        return
+
+    if args.camera is not None:
+        config['camera_index'] = args.camera
+    if args.interval is not None:
+        config['capture_interval'] = args.interval
+    if args.model is not None:
+        config['model'] = args.model
+
+    brain = AICameraBrain(config)
+    brain.run()
+
 
 if __name__ == "__main__":
     main()
