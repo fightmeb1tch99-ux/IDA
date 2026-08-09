@@ -117,29 +117,35 @@ class Brain:
         self.groq_client = None
         self.use_groq = False
 
-        # Try Groq first (free and fast)
-        groq_key = os.getenv("GROQ_API_KEY", "")
-        if _groq_available and groq_key:
+        # Try Groq first (free, recommended for Termux)
+        groq_key = (os.getenv("GROQ_API_KEY") or "").strip()
+        if _groq_available and groq_key and groq_key.startswith("gsk_"):
             try:
                 self.groq_client = Groq(api_key=groq_key)
                 self.use_groq = True
-                log_info("Groq client initialized (free LLM)")
+                log_info("Groq client OK (free LLM)")
             except Exception as e:
                 log_error("Failed to initialize Groq client", e)
                 self.use_groq = False
+        elif groq_key and not groq_key.startswith("gsk_"):
+            log_warning("GROQ_API_KEY выглядит неправильно (должен начинаться с gsk_)")
 
-        # Fallback to OpenAI
+        # Fallback to OpenAI only if Groq not available
         if not self.use_groq and _openai_available:
-            api_key = OPENAI_API_KEY or os.getenv("OPENAI_API_KEY", "")
+            api_key = (OPENAI_API_KEY or os.getenv("OPENAI_API_KEY") or "").strip()
             api_base = OPENAI_API_BASE or os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
-            if api_key:
+            # Skip obvious placeholders / empty
+            if api_key and api_key not in ("sk-...", "sk-proj-...", "your_key_here") and len(api_key) > 20:
                 try:
                     self.client = OpenAI(api_key=api_key, base_url=api_base)
                     log_info(f"OpenAI client initialized (model: {LLM_MODEL})")
                 except Exception as e:
                     log_error("Failed to initialize OpenAI client", e)
             else:
-                log_warning("No LLM API keys set — using rule-based fallback")
+                log_warning(
+                    "Нет рабочего API-ключа. Добавь GROQ_API_KEY в .env — "
+                    "бесплатно: https://console.groq.com/keys"
+                )
 
     def decide_tool(self, text: str):
         return self.parser.parse(text)
@@ -229,7 +235,18 @@ class Brain:
             return "Извини, не смог получить ответ."
         except Exception as e:
             log_error("LLM Error", e)
-            return f"Ошибка LLM: {str(e)}"
+            err = str(e)
+            if "401" in err or "invalid_api_key" in err or "Incorrect API key" in err:
+                return (
+                    "❌ Неверный API-ключ.\n\n"
+                    "Для Termux сделай так:\n"
+                    "1) nano .env\n"
+                    "2) Добавь строку: GROQ_API_KEY=gsk_твой_ключ\n"
+                    "3) Ключ бесплатно: https://console.groq.com/keys\n"
+                    "4) Удали или закомментируй битый OPENAI_API_KEY\n"
+                    "5) python main.py"
+                )
+            return f"Ошибка LLM: {err}"
 
     def _get_help_message(self) -> str:
         return """Доступные команды IDA v4.0:
