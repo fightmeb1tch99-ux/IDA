@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Send, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
+import AvatarPresence from '@/components/AvatarPresence';
 
 interface Message {
   id: string;
@@ -212,6 +213,11 @@ export default function Chat() {
 
   return (
     <div className="flex flex-col h-screen bg-background animate-fadeIn">
+      {/* Avatar Presence — first step towards digital body */}
+      <div className="flex justify-center py-4 border-b border-border/40 bg-card/30">
+        <AvatarPresence isSpeaking={isLoading} size="md" />
+      </div>
+
       {/* Messages Container */}
       <div className="flex-1 overflow-y-auto p-2 sm:p-4 space-y-3 sm:space-y-4">
         {messages.map((message) => (
