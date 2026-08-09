@@ -47,7 +47,8 @@
 - [ ] Browser automation / computer-use
 - [ ] Интеграция с календарями и умным домом
 - [ ] Плагинная система
-- [ ] Лучший веб-дашборд + realtime
+- [x] Realtime WebSocket bridge (realtime/bridge.py)
+- [ ] Полная интеграция realtime в React Dashboard
 
 ---
 
