@@ -93,7 +93,7 @@ pnpm dev
 ### 3. Мобильное приложение
 
 ```bash
-cd mobile-app   # или ida-app
+cd ida-app
 npm install
 npx expo start
 ```
@@ -102,7 +102,7 @@ npx expo start
 
 ---
 
-## 📁 Структура проекта (текущая)
+## 📁 Структура проекта
 
 ```
 IDA/
@@ -110,17 +110,16 @@ IDA/
 ├── agents/                              # Multi-agent система
 ├── core/                                # Оркестратор
 ├── memory/                              # Система памяти
-├── client/ + client-web/                # Frontend (React) — дублируется
-├── server/ + server-web/                # Backend (Express + tRPC) — дублируется
-├── mobile-app/ / ida-app/               # Expo приложение — дублируется
-├── drizzle/                             # Схема БД
+├── client/                              # Frontend (React 19 + Tailwind)
+├── server/                              # Backend (Express + tRPC)
+├── ida-app/                             # Мобильное приложение (Expo)
 ├── tools/                               # Инструменты агента
+├── drizzle/                             # Схема БД
+├── docs/archive/                        # Старые файлы и дубли
 ├── requirements.txt
 ├── package.json
 └── ...
 ```
-
-> **Важно:** В проекте есть дублирование папок. Планируется рефакторинг структуры в ближайшее время.
 
 ---
 
