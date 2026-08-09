@@ -1,81 +1,110 @@
 """
 IDA RAG Module — Knowledge Base System
-Allows IDA to read and search through local documents (PDF, TXT).
+Allows IDA to read and search through local documents (PDF, TXT, MD).
+Simple keyword search now. Ready for embeddings upgrade later.
 """
 
 import os
 from pathlib import Path
-import PyPDF2
-from logger import log_info, log_error
+from logger import log_info, log_error, log_warning
+
+try:
+    from pypdf import PdfReader
+    _PDF_AVAILABLE = True
+except ImportError:
+    try:
+        import PyPDF2
+        PdfReader = PyPDF2.PdfReader
+        _PDF_AVAILABLE = True
+    except ImportError:
+        _PDF_AVAILABLE = False
+        log_warning("pypdf / PyPDF2 not installed — PDF support disabled")
+
 
 class KnowledgeBase:
     def __init__(self, docs_dir="knowledge"):
         self.docs_dir = Path(docs_dir)
         self.docs_dir.mkdir(exist_ok=True)
         self.documents = []
+        self._loaded = False
 
-    def load_documents(self):
-        """Load all TXT and PDF files from the knowledge directory."""
+    def load_documents(self, force: bool = False):
+        """Load all TXT, MD and PDF files from the knowledge directory."""
+        if self._loaded and not force:
+            return
+
         self.documents = []
-        for file_path in self.docs_dir.glob("*"):
-            if file_path.suffix.lower() == ".txt":
-                self._load_txt(file_path)
-            elif file_path.suffix.lower() == ".pdf":
+        for file_path in self.docs_dir.rglob("*"):
+            if not file_path.is_file():
+                continue
+            suffix = file_path.suffix.lower()
+            if suffix in (".txt", ".md"):
+                self._load_text(file_path)
+            elif suffix == ".pdf" and _PDF_AVAILABLE:
                 self._load_pdf(file_path)
-        log_info(f"Loaded {len(self.documents)} document chunks into Knowledge Base.")
 
-    def _load_txt(self, path):
+        self._loaded = True
+        log_info(f"Knowledge Base: loaded {len(self.documents)} chunks from {self.docs_dir}")
+
+    def _load_text(self, path: Path):
         try:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, "r", encoding="utf-8", errors="ignore") as f:
                 content = f.read()
-                # Simple chunking by paragraphs
-                chunks = content.split("\n\n")
-                for chunk in chunks:
-                    if len(chunk.strip()) > 20:
-                        self.documents.append({"text": chunk.strip(), "source": path.name})
+            # Chunk by paragraphs, keep reasonable size
+            chunks = [c.strip() for c in content.split("\n\n") if len(c.strip()) > 30]
+            for chunk in chunks:
+                self.documents.append({"text": chunk, "source": path.name})
         except Exception as e:
-            log_error(f"Error loading TXT {path.name}", e)
+            log_error(f"Error loading text {path.name}", e)
 
-    def _load_pdf(self, path):
+    def _load_pdf(self, path: Path):
         try:
-            with open(path, "rb") as f:
-                reader = PyPDF2.PdfReader(f)
-                for i, page in enumerate(reader.pages):
-                    text = page.extract_text()
-                    if text and len(text.strip()) > 20:
-                        self.documents.append({"text": text.strip(), "source": f"{path.name} (page {i+1})"})
+            reader = PdfReader(str(path))
+            for i, page in enumerate(reader.pages):
+                text = page.extract_text() or ""
+                text = text.strip()
+                if len(text) > 30:
+                    self.documents.append({
+                        "text": text,
+                        "source": f"{path.name} (стр. {i+1})"
+                    })
         except Exception as e:
             log_error(f"Error loading PDF {path.name}", e)
 
-    def search(self, query: str, top_k=3):
-        """Simple keyword-based search (can be upgraded to embeddings later)."""
+    def search(self, query: str, top_k: int = 3) -> str:
+        """Simple keyword-based search. Upgrade to embeddings later."""
+        self.load_documents()
         if not self.documents:
-            return "База знаний пуста."
-        
-        query_words = query.lower().split()
+            return "База знаний пуста. Положи .txt / .md / .pdf файлы в папку knowledge/"
+
+        query_words = [w for w in query.lower().split() if len(w) > 2]
+        if not query_words:
+            return "Слишком короткий запрос для поиска."
+
         results = []
-        
         for doc in self.documents:
-            score = sum(1 for word in query_words if word in doc["text"].lower())
+            text_lower = doc["text"].lower()
+            score = sum(1 for word in query_words if word in text_lower)
             if score > 0:
                 results.append((score, doc))
-        
-        # Sort by score descending
+
         results.sort(key=lambda x: x[0], reverse=True)
-        
+
         if not results:
-            return "В базе знаний ничего не найдено."
-        
-        formatted_results = []
+            return "В базе знаний ничего не найдено по этому запросу."
+
+        formatted = []
         for score, doc in results[:top_k]:
-            formatted_results.append(f"--- Источник: {doc['source']} ---\n{doc['text']}")
-        
-        return "\n\n".join(formatted_results)
+            preview = doc["text"][:500] + ("..." if len(doc["text"]) > 500 else "")
+            formatted.append(f"--- Источник: {doc['source']} (релевантность: {score}) ---\n{preview}")
+
+        return "\n\n".join(formatted)
+
 
 # Global instance
 kb = KnowledgeBase()
 
-def ask_knowledge(query: str):
+
+def ask_knowledge(query: str) -> str:
     """Tool function to search the knowledge base."""
-    kb.load_documents() # Refresh docs on search
     return kb.search(query)
