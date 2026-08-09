@@ -36,14 +36,36 @@ def print_banner():
 
 def handle_input(brain: Brain, user_input: str) -> str:
     """Единая точка обработки пользовательского ввода."""
-    tool_name = brain.decide_tool(user_input)
+    from tools.tools import TOOLS
+
+    tool_name, arg = brain.decide_tool(user_input)
 
     tool_result = None
-    # Здесь можно подключить выполнение инструментов из tools/
-    # Пока просто генерируем ответ
+    if tool_name and tool_name in TOOLS:
+        try:
+            tool_fn = TOOLS[tool_name]
+            if arg is not None:
+                tool_result = tool_fn(arg)
+            else:
+                tool_result = tool_fn()
+        except TypeError:
+            try:
+                tool_result = TOOLS[tool_name](arg) if arg else TOOLS[tool_name]()
+            except Exception as e:
+                tool_result = f"Ошибка инструмента: {e}"
+        except Exception as e:
+            tool_result = f"Ошибка при выполнении: {e}"
 
     response = brain.generate_response(user_input, tool_result)
     brain.add_to_history(user_input, response)
+
+    # Сохраняем память
+    try:
+        from memory_manager import MemoryManager
+        MemoryManager().save(brain.memory)
+    except Exception:
+        pass
+
     return response
 
 
