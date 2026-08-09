@@ -6,6 +6,7 @@ import { Send, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
 import AvatarPresence from '@/components/AvatarPresence';
+import { useIDARealtime } from '@/hooks/useIDARealtime';
 
 interface Message {
   id: string;
@@ -30,6 +31,23 @@ export default function Chat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const sendMessageMutation = trpc.chat.sendMessage.useMutation();
   const streamingRef = useRef<AbortController | null>(null);
+
+  // Realtime bridge (optional — falls back to tRPC if bridge is down)
+  const { status: rtStatus, send: rtSend, lastError: rtError } = useIDARealtime({
+    enabled: true,
+    onMessage: (msg) => {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          text: msg.text,
+          sender: msg.role === 'assistant' ? 'assistant' : 'user',
+          timestamp: new Date(),
+        },
+      ]);
+      setIsLoading(false);
+    },
+  });
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -215,7 +233,17 @@ export default function Chat() {
     <div className="flex flex-col h-screen bg-background animate-fadeIn">
       {/* Avatar Presence — first step towards digital body */}
       <div className="flex justify-center py-4 border-b border-border/40 bg-card/30">
-        <AvatarPresence isSpeaking={isLoading} size="md" />
+        <AvatarPresence
+          isSpeaking={rtStatus.speaking || isLoading}
+          isListening={rtStatus.thinking}
+          size="md"
+        />
+        {rtStatus.connected && (
+          <p className="text-[10px] text-cyan-600/70 mt-6 tracking-widest uppercase">realtime</p>
+        )}
+        {rtError && !rtStatus.connected && (
+          <p className="text-[10px] text-muted-foreground mt-6">bridge offline — tRPC fallback</p>
+        )}
       </div>
 
       {/* Messages Container */}

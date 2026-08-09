@@ -100,6 +100,20 @@ npx expo start
 
 Сканируйте QR-код в приложении **Expo Go**.
 
+### 4. Realtime Bridge (голос + аватар в реальном времени)
+
+```bash
+pip install fastapi uvicorn websockets
+python -m realtime.bridge
+# WebSocket: ws://localhost:8765/ws
+# HTTP:      POST http://localhost:8765/chat
+```
+
+Веб-чат автоматически пробует подключиться к мосту. Если мост не запущен — работает через tRPC.
+
+Положи документы в `knowledge/` для RAG.
+
+
 ---
 
 ## 📁 Структура проекта
