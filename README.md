@@ -8,32 +8,34 @@
 ║   ██║██████╔╝██║  ██║                                          ║
 ║   ╚═╝╚═════╝ ╚═╝  ╚═╝                                          ║
 ║                                                                ║
-║     Инновационный Динамический Помощник  •  v4.0               ║
+║     Инновационный Динамический Помощник  •  v4.1               ║
 ║                                                                ║
 ╚════════════════════════════════════════════════════════════════╝
 ```
 
 # IDA — Инновационный Динамический AI-помощник
 
-**IDA** — полноценная экосистема персонального ИИ-помощника, которая работает в терминале (Termux/ПК), веб-браузере и мобильном приложении.
+**IDA** — полноценная экосистема персонального ИИ-помощника.  
+Работает в терминале (Termux / ПК), веб-браузере и мобильном приложении.
 
-**Автор:** Айтал Григорьев ([@Mareioak](https://github.com/fightmeb1tch99-ux))
+**Автор:** Айтал Григорьев ([@fightmeb1tch99-ux](https://github.com/fightmeb1tch99-ux))
 
 [![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python)](https://python.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev)
 [![Expo](https://img.shields.io/badge/Expo-Mobile-000020?logo=expo)](https://expo.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Status](https://img.shields.io/badge/Status-Active-success)](https://github.com/fightmeb1tch99-ux/IDA)
 
 ---
 
 ## ✨ Возможности
 
 ### 🧠 Интеллект
-- **Multi-LLM** — OpenAI, Groq, Claude, Gemini, Mistral
+- **Multi-LLM** — OpenAI, Groq, Claude, Gemini, Mistral и другие
 - Поддержка контекста и долгосрочной памяти
 - Понимание команд на **русском, якутском и английском**
-- RAG (работа с локальными документами) — в разработке
+- RAG (работа с локальными документами) — в активной разработке
 
 ### 🛠️ Инструменты
 | Команда | Описание |
@@ -78,8 +80,6 @@ cp .env.example .env
 
 # Запуск
 python3 main.py
-# или
-python3 brain.py
 ```
 
 ### 2. Web Dashboard
@@ -102,24 +102,25 @@ npx expo start
 
 ---
 
-## 📁 Структура проекта
+## 📁 Структура проекта (текущая)
 
 ```
 IDA/
-├── brain.py / main.py / ida_system.py   # Ядро Python-агента
+├── main.py / brain.py / ida_system.py   # Ядро Python-агента
 ├── agents/                              # Multi-agent система
 ├── core/                                # Оркестратор
 ├── memory/                              # Система памяти
-├── client/ + client-web/                # Frontend (React)
-├── server/ + server-web/                # Backend (Express + tRPC)
-├── mobile-app/ / ida-app/               # Expo приложение
+├── client/ + client-web/                # Frontend (React) — дублируется
+├── server/ + server-web/                # Backend (Express + tRPC) — дублируется
+├── mobile-app/ / ida-app/               # Expo приложение — дублируется
 ├── drizzle/                             # Схема БД
+├── tools/                               # Инструменты агента
 ├── requirements.txt
 ├── package.json
 └── ...
 ```
 
-> **Примечание:** В проекте есть дублирование некоторых папок (`client` / `client-web` и т.д.) — это результат активной разработки. Планируется рефакторинг.
+> **Важно:** В проекте есть дублирование папок. Планируется рефакторинг структуры в ближайшее время.
 
 ---
 
@@ -140,19 +141,16 @@ DATABASE_URL=...
 
 ---
 
-## 🗺️ Roadmap (кратко)
+## 🗺️ Roadmap
 
-- [x] Базовый агент + безопасность
-- [x] Multi-LLM поддержка
-- [x] Web Dashboard
-- [x] Мобильное приложение
+См. актуальный [ROADMAP.md](ROADMAP.md)
+
+**Ближайшие приоритеты:**
+- [ ] Очистка и унификация структуры проекта
 - [ ] Полноценный RAG
 - [ ] Локальные LLM (Ollama)
 - [ ] Улучшенный голос (Whisper + Piper)
 - [ ] Multi-agent оркестрация
-- [ ] Рефакторинг структуры проекта
-
-Подробнее: [ROADMAP.md](ROADMAP.md)
 
 ---
 
@@ -170,4 +168,6 @@ MIT License — свободно используйте и модифициру�
 ---
 
 **Статус:** 🟢 Активная разработка  
-**Последнее обновление:** Август 2026
+**Последнее обновление:** Август 2026  
+**Версия:** 4.1
+```
