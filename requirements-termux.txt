@@ -1,0 +1,10 @@
+# Minimal deps for Termux (Android)
+python-dotenv>=1.0.0
+requests>=2.31.0
+colorama>=0.4.6
+groq>=0.9.0
+
+# Optional (install if needed):
+# openai>=1.40.0
+# pypdf>=4.0.0
+# rich>=13.0.0

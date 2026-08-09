@@ -14,7 +14,11 @@ import urllib.request
 from datetime import datetime
 from pathlib import Path
 
-from rag import ask_knowledge
+try:
+    from rag import ask_knowledge
+except Exception:
+    def ask_knowledge(query: str):
+        return "RAG недоступен. Установи pypdf: pip install pypdf"
 from logger import log_debug, log_error, log_info, log_warning
 from config import SAFE_COMMANDS, COMMAND_TIMEOUT, SEARCH_TIMEOUT, CREATED_FILES_DIR
 

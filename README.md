@@ -65,6 +65,21 @@
 
 ## 🚀 Быстрый старт
 
+
+### Termux (Android)
+
+```bash
+pkg install python git
+git clone https://github.com/fightmeb1tch99-ux/IDA.git
+cd IDA
+bash termux_setup.sh
+
+# Добавь ключ (бесплатно на https://console.groq.com/keys)
+nano .env   # GROQ_API_KEY=gsk_...
+
+python main.py
+```
+
 ### 1. Python-агент (Termux / ПК)
 
 ```bash

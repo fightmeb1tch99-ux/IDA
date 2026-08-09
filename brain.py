@@ -171,16 +171,20 @@ class Brain:
 
         # Tool result
         if tool_result is not None:
-            if self.client:
-                prompt = f"Пользователь спросил: «{user_input}». Результат: {tool_result}. Прокомментируй кратко и дружелюбно."
+            if self.use_groq or self.client:
+                prompt = f"Пользователь спросил: «{user_input}». Результат: {tool_result}. Прокомментируй кратко и дружелюбно по-русски."
                 return self._get_llm_response(prompt)
             return str(tool_result)
 
-        # LLM
-        if self.client:
+        # LLM (Groq or OpenAI)
+        if self.use_groq or self.client:
             return self._get_llm_response(user_input)
 
-        return "Я пока не понимаю это. Напиши «помощь» для списка команд."
+        return (
+            "Нет API-ключа. Добавь GROQ_API_KEY в .env\n"
+            "Бесплатно: https://console.groq.com/keys\n"
+            "Или напиши «помощь» для списка локальных команд."
+        )
 
     def add_to_history(self, user_input: str, response: str):
         self.conversation_history.append({"user": user_input, "response": response})
@@ -204,7 +208,7 @@ class Brain:
             # Use Groq if available
             if self.use_groq and self.groq_client:
                 response = self.groq_client.chat.completions.create(
-                    model="mixtral-8x7b-32768",
+                    model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
                     messages=messages,
                     temperature=0.7,
                     max_tokens=1024,
