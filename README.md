@@ -8,15 +8,16 @@
 ║   ██║██████╔╝██║  ██║                                          ║
 ║   ╚═╝╚═════╝ ╚═╝  ╚═╝                                          ║
 ║                                                                ║
-║     Инновационный Динамический Помощник  •  v4.1               ║
+║     Инновационный Динамический Помощник  •  v5.0               ║
 ║                                                                ║
 ╚════════════════════════════════════════════════════════════════╝
 ```
 
 # IDA — Инновационный Динамический AI-помощник
 
-**IDA** — полноценная экосистема персонального ИИ-помощника.  
-Работает в терминале (Termux / ПК), веб-браузере и мобильном приложении.
+**IDA** — полноценная экосистема персонального ИИ-помощника с живым аватаром, голосом, памятью и возможностью **реально играть с тобой в Minecraft**.
+
+Работает в терминале (Termux / ПК), веб-браузере, мобильном приложении и как компаньон в Minecraft.
 
 **Автор:** Айтал Григорьев ([@fightmeb1tch99-ux](https://github.com/fightmeb1tch99-ux))
 
@@ -24,18 +25,35 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev)
 [![Expo](https://img.shields.io/badge/Expo-Mobile-000020?logo=expo)](https://expo.dev)
+[![Live2D](https://img.shields.io/badge/Live2D-Avatar-ff69b4)](https://www.live2d.com/)
+[![Minecraft](https://img.shields.io/badge/Minecraft-Companion-green)](https://www.minecraft.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-Active-success)](https://github.com/fightmeb1tch99-ux/IDA)
+[![Status](https://img.shields.io/badge/Status-v5.0-success)](https://github.com/fightmeb1tch99-ux/IDA)
 
 ---
 
-## ✨ Возможности
+## ✨ Возможности v5.0
 
 ### 🧠 Интеллект
 - **Multi-LLM** — OpenAI, Groq, Claude, Gemini, Mistral и другие
-- Поддержка контекста и долгосрочной памяти
+- Долгосрочная память + RAG
 - Понимание команд на **русском, якутском и английском**
-- RAG (работа с локальными документами) — в активной разработке
+- Динамический **лор** — личность IDA можно менять в любой момент
+
+### 👤 Живой аватар (Live2D)
+- Полноценная поддержка Live2D Cubism
+- Компонент `Live2DAvatar` (React)
+- Оптимизация памяти и GPU для всех устройств (ПК + телефон)
+- Адаптивный размер, touch-события, ограничение FPS
+- Scaffold готов в `client/public/live2d/ida/` и `avatar/live2d/`
+- Описание персонажа: `avatar/ida-live2d-character.json`
+
+### 🎮 Minecraft-компаньон
+- IDA **реально заходит** на Java Edition сервер и играет с тобой
+- Общается в чате как живой друг
+- Может следовать за тобой, останавливаться, приходить
+- Имеет свой **лор**, который меняется по твоей просьбе
+- Модуль: `minecraft/` (Mineflayer + Python manager)
 
 ### 🛠️ Инструменты
 | Команда | Описание |
@@ -51,9 +69,11 @@
 
 ### 🖥️ Интерфейсы
 - **Python-агент** — CLI + голос (Termux / Linux / Windows / macOS)
-- **Web Dashboard** — React 19 + tRPC + Tailwind (киберпанк-дизайн)
+- **Web Dashboard** — React 19 + tRPC + Tailwind
 - **Мобильное приложение** — Expo / React Native
-- **Telegram-бот** — управление на ходу
+- **Telegram-бот**
+- **Live2D-аватар** в веб-клиенте
+- **Minecraft-бот**
 
 ### 🔒 Безопасность
 - Белый список системных команд
@@ -65,36 +85,26 @@
 
 ## 🚀 Быстрый старт
 
-
-### Termux (Android)
-
-```bash
-pkg install python git
-git clone https://github.com/fightmeb1tch99-ux/IDA.git
-cd IDA
-bash termux_setup.sh
-
-# Добавь ключ (бесплатно на https://console.groq.com/keys)
-nano .env   # GROQ_API_KEY=gsk_...
-
-python main.py
-```
-
 ### 1. Python-агент (Termux / ПК)
 
 ```bash
 git clone https://github.com/fightmeb1tch99-ux/IDA.git
 cd IDA
-
-# Установка зависимостей
 pip install -r requirements.txt
-
-# Настройка
 cp .env.example .env
-# Добавьте ключи в .env (минимум GROQ_API_KEY или OPENAI_API_KEY)
-
-# Запуск
+# Добавь GROQ_API_KEY или OPENAI_API_KEY
 python3 main.py
+```
+
+### Termux (Android)
+
+```bash
+pkg install python git nodejs
+git clone https://github.com/fightmeb1tch99-ux/IDA.git
+cd IDA
+bash termux_setup.sh
+nano .env   # GROQ_API_KEY=gsk_...
+python main.py
 ```
 
 ### 2. Web Dashboard
@@ -102,100 +112,106 @@ python3 main.py
 ```bash
 pnpm install
 pnpm dev
-# Откройте http://localhost:3000
 ```
 
-### 3. Мобильное приложение
+### 3. Live2D Аватар
 
 ```bash
-cd ida-app
+pnpm add pixi.js@^7 pixi-live2d-display
+```
+
+Используй компонент:
+
+```tsx
+import Live2DAvatar from "@/components/Live2DAvatar";
+
+<Live2DAvatar
+  isSpeaking={isSpeaking}
+  isListening={isListening}
+  maxFPS={30}
+  lowQuality={false}
+/>
+```
+
+Модель кладётся в `client/public/live2d/ida/`.
+
+### 4. Minecraft-компаньон
+
+```bash
+cd minecraft
 npm install
-npx expo start
 ```
 
-Сканируйте QR-код в приложении **Expo Go**.
+Из Python:
 
-### 4. Realtime Bridge (голос + аватар в реальном времени)
+```python
+from minecraft import MinecraftBotManager
 
-```bash
-pip install fastapi uvicorn websockets
-python -m realtime.bridge
-# WebSocket: ws://localhost:8765/ws
-# HTTP:      POST http://localhost:8765/chat
+bot = MinecraftBotManager()
+await bot.connect("play.example.com", 25565, username="IDA")
+await bot.chat("Привет! Я с тобой~")
+await bot.follow_player("ТвойНик")
 ```
 
-Веб-чат автоматически пробует подключиться к мосту. Если мост не запущен — работает через tRPC.
+Лор меняется так:
 
-Положи документы в `knowledge/` для RAG.
+```python
+bot.lore.update({
+  "backstory": "Теперь я древний дух тайги...",
+  "current_mood": "загадочная"
+})
+```
 
+Или просто скажи IDA: «Измени свой лор на ...»
 
 ---
 
-## 📁 Структура проекта
+## 📁 Структура проекта (ключевое)
 
 ```
 IDA/
-├── main.py / brain.py / ida_system.py   # Ядро Python-агента
-├── agents/                              # Multi-agent система
-├── core/                                # Оркестратор
-├── memory/                              # Система памяти
-├── client/                              # Frontend (React 19 + Tailwind)
-├── server/                              # Backend (Express + tRPC)
-├── ida-app/                             # Мобильное приложение (Expo)
-├── tools/                               # Инструменты агента
-├── drizzle/                             # Схема БД
-├── docs/archive/                        # Старые файлы и дубли
-├── requirements.txt
-├── package.json
-└── ...
-```
-
----
-
-## 🔑 Переменные окружения
-
-Скопируйте `.env.example` → `.env`:
-
-```bash
-# Обязательно хотя бы один LLM
-OPENAI_API_KEY=sk-...
-GROQ_API_KEY=gsk_...
-
-# Опционально
-TELEGRAM_BOT_TOKEN=...
-ALLOWED_USER_IDS=...
-DATABASE_URL=...
+├── avatar/                    # Описание и Live2D scaffold
+│   ├── ida-live2d-character.json
+│   └── live2d/
+├── client/                    # Web Dashboard (React)
+│   ├── public/live2d/ida/     # Live2D runtime files
+│   └── src/components/
+│       ├── Live2DAvatar.tsx   # Оптимизированный аватар
+│       └── LIVE2D_INTEGRATION.md
+├── minecraft/                 # Minecraft companion
+│   ├── bot.js                 # Mineflayer бот
+│   ├── bot_manager.py
+│   ├── lore.py
+│   └── package.json
+├── knowledge/lore/            # Динамический лор
+│   └── ida_minecraft.json
+├── agents/                    # Агенты
+├── plugins/                   # Плагины
+├── brain.py                   # Основной мозг
+├── main.py
+└── README.md
 ```
 
 ---
 
 ## 🗺️ Roadmap
 
-См. актуальный [ROADMAP.md](ROADMAP.md)
-
-**Ближайшие приоритеты:**
-- [ ] Очистка и унификация структуры проекта
-- [ ] Полноценный RAG
-- [ ] Локальные LLM (Ollama)
-- [ ] Улучшенный голос (Whisper + Piper)
-- [ ] Multi-agent оркестрация
-
----
-
-## 🐛 Баги и предложения
-
-Нашли баг или есть идея?  
-→ Создайте [Issue](https://github.com/fightmeb1tch99-ux/IDA/issues)
+- [x] Multi-LLM + память
+- [x] Web + Mobile
+- [x] Live2D scaffold + оптимизация памяти
+- [x] Minecraft companion (реальная игра + лор)
+- [ ] Полноценная Live2D-модель (арт + риг)
+- [ ] Голосовой lip-sync с аватаром
+- [ ] Более умное поведение бота в Minecraft (добыча, строительство)
+- [ ] VRM / 3D аватар
 
 ---
 
-## 📄 Лицензия
+## 📜 Лицензия
 
-MIT License — свободно используйте и модифицируйте.
+MIT License — см. [LICENSE](LICENSE)
 
 ---
 
-**Статус:** 🟢 Активная разработка  
-**Последнее обновление:** Август 2026  
-**Версия:** 4.1
-```
+**IDA v5.0** — теперь не просто помощник, а живой компаньон.  
+С аватаром. С характером. И готова зайти к тебе в Minecraft.
