@@ -1,0 +1,88 @@
+{
+  "Version": 3,
+  "FileReferences": {
+    "Moc": "ida.moc3",
+    "Textures": [
+      "ida.2048/texture_00.png"
+    ],
+    "Physics": "ida.physics3.json",
+    "Pose": "ida.pose3.json",
+    "DisplayInfo": "ida.cdi3.json",
+    "Expressions": [
+      {
+        "Name": "neutral",
+        "File": "expressions/neutral.exp3.json"
+      },
+      {
+        "Name": "happy",
+        "File": "expressions/happy.exp3.json"
+      },
+      {
+        "Name": "thinking",
+        "File": "expressions/thinking.exp3.json"
+      },
+      {
+        "Name": "listening",
+        "File": "expressions/listening.exp3.json"
+      },
+      {
+        "Name": "speaking",
+        "File": "expressions/speaking.exp3.json"
+      }
+    ],
+    "Motions": {
+      "Idle": [
+        {
+          "File": "motions/idle_01.motion3.json"
+        },
+        {
+          "File": "motions/idle_02.motion3.json"
+        }
+      ],
+      "Talk": [
+        {
+          "File": "motions/talk_01.motion3.json"
+        },
+        {
+          "File": "motions/talk_02.motion3.json"
+        }
+      ],
+      "Listen": [
+        {
+          "File": "motions/listen_01.motion3.json"
+        }
+      ]
+    }
+  },
+  "Groups": [
+    {
+      "Target": "Parameter",
+      "Name": "EyeBlink",
+      "Ids": [
+        "ParamEyeLOpen",
+        "ParamEyeROpen"
+      ]
+    },
+    {
+      "Target": "Parameter",
+      "Name": "LipSync",
+      "Ids": [
+        "ParamMouthOpenY"
+      ]
+    }
+  ],
+  "HitAreas": [
+    {
+      "Id": "HitAreaHead",
+      "Name": "Head"
+    },
+    {
+      "Id": "HitAreaBody",
+      "Name": "Body"
+    },
+    {
+      "Id": "HitAreaHair",
+      "Name": "Hair"
+    }
+  ]
+}
