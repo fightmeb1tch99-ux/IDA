@@ -1,12 +1,10 @@
-# Live2D Integration for IDA
+# Live2D Integration for IDA (Mobile-ready)
 
 ## Dependencies
 
 ```bash
 pnpm add pixi.js@^7 pixi-live2d-display
 ```
-
-> Use pixi.js v7 for best compatibility with pixi-live2d-display.
 
 ## Usage
 
@@ -19,17 +17,27 @@ import Live2DAvatar from "@/components/Live2DAvatar";
   isListening={isListening}
   width={280}
   height={380}
+  interactive={true}
 />
 ```
+
+## Mobile features
+
+- Automatic responsive sizing (`window.innerWidth < 768`)
+- Lower resolution & disabled antialiasing on mobile for better performance
+- `powerPreference: "low-power"` on mobile
+- Touch / tap interaction (plays "Tap" motion)
+- `touch-action: manipulation` to avoid 300ms delay
+- Graceful fallback text when model is not yet ready
 
 ## Current status
 
 - Scaffold is in `public/live2d/ida/`
-- Real `.moc3` + texture still needed (create in Cubism Editor)
-- Until the real model is ready the component will log a warning and show nothing (or you can keep the old AvatarPresence as fallback)
+- Real `.moc3` + texture still needed
+- Until the real model appears the component shows a soft fallback
 
 ## Next steps
 
-1. Create the model in Live2D Cubism Editor using the character references
+1. Create the model in Live2D Cubism Editor
 2. Export runtime files into `client/public/live2d/ida/`
-3. Replace AvatarPresence with Live2DAvatar in Chat / Dashboard
+3. Replace old `AvatarPresence` with `Live2DAvatar` in Chat / Dashboard pages
