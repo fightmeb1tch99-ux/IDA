@@ -1,0 +1,102 @@
+{
+  "version": "1.0.0",
+  "name": "IDA",
+  "displayName": "Ida",
+  "type": "live2d-character",
+  "description": "Digital avatar of IDA — beautiful young Yakut/Sakha woman, anime style, designed for Live2D Cubism integration.",
+  "meta": {
+    "age": 20,
+    "ethnicity": "Yakut / Sakha",
+    "gender": "female",
+    "style": "clean anime, Makoto Shinkai inspired",
+    "artDirection": "soft warm lighting, highly detailed, 4K character sheet, front view"
+  },
+  "appearance": {
+    "hair": {
+      "color": "black",
+      "length": "very long, straight, flowing to waist",
+      "style": "straight, natural fall"
+    },
+    "eyes": {
+      "shape": "almond-shaped",
+      "color": "dark brown",
+      "lashes": "long natural eyelashes"
+    },
+    "skin": {
+      "tone": "fair porcelain with warm undertone"
+    },
+    "face": {
+      "nose": "small straight",
+      "lips": "medium natural pink",
+      "cheeks": "soft round",
+      "overall": "gentle feminine face"
+    },
+    "body": {
+      "build": "slender, feminine",
+      "height": "average"
+    }
+  },
+  "outfit": {
+    "default": {
+      "dress": "elegant white off-shoulder summer dress with gathered bodice",
+      "hat": "straw wide-brim hat",
+      "accessories": [
+        "delicate pearl necklace",
+        "silver drop earrings"
+      ]
+    }
+  },
+  "scene": {
+    "background": "sunny beach with blue water",
+    "lighting": "soft warm lighting",
+    "mood": "gentle, calm, inviting"
+  },
+  "live2d": {
+    "modelFile": "ida.model3.json",
+    "textures": [
+      "ida.2048/texture_00.png"
+    ],
+    "motions": {
+      "idle": ["idle_01", "idle_02"],
+      "talk": ["talk_01", "talk_02"],
+      "listen": ["listen_01"],
+      "blink": ["blink"],
+      "smile": ["smile_01"],
+      "surprised": ["surprised_01"]
+    },
+    "expressions": {
+      "neutral": 0,
+      "happy": 1,
+      "thinking": 2,
+      "listening": 3,
+      "speaking": 4
+    },
+    "physics": {
+      "hair": true,
+      "dress": true,
+      "hat": true
+    },
+    "hitAreas": [
+      { "id": "Head", "name": "Head" },
+      { "id": "Body", "name": "Body" },
+      { "id": "Hair", "name": "Hair" }
+    ],
+    "parameters": {
+      "ParamAngleX": { "min": -30, "max": 30, "default": 0 },
+      "ParamAngleY": { "min": -30, "max": 30, "default": 0 },
+      "ParamAngleZ": { "min": -30, "max": 30, "default": 0 },
+      "ParamEyeLOpen": { "min": 0, "max": 1, "default": 1 },
+      "ParamEyeROpen": { "min": 0, "max": 1, "default": 1 },
+      "ParamMouthOpenY": { "min": 0, "max": 1, "default": 0 },
+      "ParamBreath": { "min": 0, "max": 1, "default": 0 }
+    }
+  },
+  "prompt": "Anime girl character design, beautiful young Yakut/Sakha woman named Ida, age 20, very long straight black hair flowing down to waist, fair porcelain skin with warm undertone, almond-shaped dark brown eyes with long natural eyelashes, small straight nose, medium natural pink lips, soft round cheeks, gentle feminine face, wearing elegant white off-shoulder summer dress with gathered bodice, straw wide-brim hat, delicate pearl necklace, silver drop earrings, standing on sunny beach with blue water background, soft warm lighting, clean anime art style, Makoto Shinkai inspired, character sheet, front view, 4K, highly detailed",
+  "integration": {
+    "web": "pixi-live2d-display or Cubism Web SDK",
+    "recommendedPath": "client/public/live2d/ida/",
+    "notes": "Place .model3.json + texture folder under public/live2d/ida/. Connect lip-sync to ParamMouthOpenY and eye blink to ParamEyeLOpen / ParamEyeROpen."
+  },
+  "created": "2026-08-11",
+  "author": "IDA skill + user prompt"
+}
