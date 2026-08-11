@@ -1,0 +1,14 @@
+{
+  "name": "ida-minecraft-bot",
+  "version": "1.0.0",
+  "description": "IDA Minecraft companion bot (Mineflayer)",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js"
+  },
+  "dependencies": {
+    "mineflayer": "^4.20.0",
+    "mineflayer-pathfinder": "^2.4.0",
+    "minecraft-data": "^3.60.0"
+  }
+}
