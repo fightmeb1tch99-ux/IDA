@@ -1,4 +1,4 @@
-# Live2D Integration for IDA (Mobile-ready)
+# Live2D Integration for IDA (Memory-optimized)
 
 ## Dependencies
 
@@ -17,27 +17,32 @@ import Live2DAvatar from "@/components/Live2DAvatar";
   isListening={isListening}
   width={280}
   height={380}
+  maxFPS={30}          // lower = less GPU/memory
+  lowQuality={false}   // true = even more aggressive
   interactive={true}
 />
 ```
 
-## Mobile features
+## Optimizations applied (all devices)
 
-- Automatic responsive sizing (`window.innerWidth < 768`)
-- Lower resolution & disabled antialiasing on mobile for better performance
-- `powerPreference: "low-power"` on mobile
-- Touch / tap interaction (plays "Tap" motion)
-- `touch-action: manipulation` to avoid 300ms delay
-- Graceful fallback text when model is not yet ready
+- Antialiasing **disabled** everywhere
+- Resolution capped (1× on mobile / lowQuality, max 1.5× on desktop)
+- `powerPreference: "low-power"`
+- FPS limited (default 30)
+- Ticker **stops** when tab is hidden
+- Smaller default size on desktop
+- Proper destroy of model + app (no texture leaks)
+- `touch-action: manipulation`
+- Passive resize listener
 
 ## Current status
 
-- Scaffold is in `public/live2d/ida/`
-- Real `.moc3` + texture still needed
-- Until the real model appears the component shows a soft fallback
+- Scaffold in `public/live2d/ida/`
+- Real `.moc3` + texture still required
+- Until then the component shows a soft fallback
 
 ## Next steps
 
-1. Create the model in Live2D Cubism Editor
-2. Export runtime files into `client/public/live2d/ida/`
-3. Replace old `AvatarPresence` with `Live2DAvatar` in Chat / Dashboard pages
+1. Create model in Live2D Cubism Editor
+2. Export into `client/public/live2d/ida/`
+3. Replace `AvatarPresence` with `Live2DAvatar`
