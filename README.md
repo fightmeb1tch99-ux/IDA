@@ -8,7 +8,7 @@
 ║   ██║██████╔╝██║  ██║                                          ║
 ║   ╚═╝╚═════╝ ╚═╝  ╚═╝                                          ║
 ║                                                                ║
-║     Инновационный Динамический Помощник  •  v5.0               ║
+║     Инновационный Динамический Помощник  •  v5.1               ║
 ║                                                                ║
 ╚════════════════════════════════════════════════════════════════╝
 ```
@@ -28,7 +28,7 @@
 [![Live2D](https://img.shields.io/badge/Live2D-Avatar-ff69b4)](https://www.live2d.com/)
 [![Minecraft](https://img.shields.io/badge/Minecraft-Companion-green)](https://www.minecraft.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-v5.0-success)](https://github.com/fightmeb1tch99-ux/IDA)
+[![Status](https://img.shields.io/badge/Status-v5.1-success)](https://github.com/fightmeb1tch99-ux/IDA)
 
 ---
 
@@ -47,6 +47,14 @@
 - Адаптивный размер, touch-события, ограничение FPS
 - Scaffold готов в `client/public/live2d/ida/` и `avatar/live2d/`
 - Описание персонажа: `avatar/ida-live2d-character.json`
+
+
+### 💬 Discord-компаньон
+- Отвечает на упоминания и ЛС
+- Заходит в голосовые каналы (`/join`, `/leave`)
+- Динамический лор (`/lore`)
+- Интеграция с Brain
+- Модуль: `discord_bot/`
 
 ### 🎮 Minecraft-компаньон
 - IDA **реально заходит** на Java Edition сервер и играет с тобой
@@ -200,6 +208,7 @@ IDA/
 - [x] Web + Mobile
 - [x] Live2D scaffold + оптимизация памяти
 - [x] Minecraft companion (реальная игра + лор)
+- [x] Discord companion (чат + голосовые + лор)
 - [ ] Полноценная Live2D-модель (арт + риг)
 - [ ] Голосовой lip-sync с аватаром
 - [ ] Более умное поведение бота в Minecraft (добыча, строительство)
@@ -213,5 +222,5 @@ MIT License — см. [LICENSE](LICENSE)
 
 ---
 
-**IDA v5.0** — теперь не просто помощник, а живой компаньон.  
+**IDA v5.1** — теперь не просто помощник, а живой компаньон.  
 С аватаром. С характером. И готова зайти к тебе в Minecraft.
