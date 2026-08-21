@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DEDSEC // CODE AUDIT</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #000;
+      color: #0f0;
+      font-family: 'Share Tech Mono', monospace;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .glitch-title {
+      font-size: clamp(2.5rem, 8vw, 5rem);
+      font-weight: 900;
+      letter-spacing: 0.15em;
+      text-align: center;
+      position: relative;
+      color: #fff;
+      animation: flicker 3s infinite;
+    }
+    .glitch-title::before,
+    .glitch-title::after {
+      content: 'DEDSEC';
+      position: absolute;
+      left: 0; right: 0;
+      top: 0;
+    }
+    .glitch-title::before {
+      color: #0f0;
+      animation: glitch1 2.5s infinite;
+      clip-path: inset(0 0 55% 0);
+    }
+    .glitch-title::after {
+      color: #f0f;
+      animation: glitch2 2.5s infinite;
+      clip-path: inset(45% 0 0 0);
+    }
+    @keyframes glitch1 {
+      0%,90%,100% { transform: translate(0); }
+      92% { transform: translate(-4px, 1px); }
+      96% { transform: translate(3px, -1px); }
+    }
+    @keyframes glitch2 {
+      0%,90%,100% { transform: translate(0); }
+      93% { transform: translate(4px, -1px); }
+      97% { transform: translate(-3px, 2px); }
+    }
+    @keyframes flicker {
+      0%,95%,100% { opacity: 1; }
+      96% { opacity: 0.8; }
+      98% { opacity: 0.9; }
+    }
+    .sub {
+      text-align: center;
+      color: #0f0;
+      letter-spacing: 0.4em;
+      font-size: 0.85rem;
+      margin: 0.5rem 0 2rem;
+      opacity: 0.7;
+    }
+    .panel {
+      max-width: 800px;
+      margin: 0 auto;
+      border: 1px solid #0f03;
+      background: #050505;
+      padding: 1.5rem;
+      box-shadow: 0 0 30px #0f02;
+    }
+    textarea, select, button, input[type=file] {
+      width: 100%;
+      background: #0a0a0a;
+      border: 1px solid #0f04;
+      color: #0f0;
+      font-family: inherit;
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      font-size: 0.95rem;
+    }
+    textarea { min-height: 200px; resize: vertical; }
+    button {
+      cursor: pointer;
+      background: #001a00;
+      border-color: #0f0;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      transition: 0.15s;
+    }
+    button:hover { background: #0f0; color: #000; box-shadow: 0 0 20px #0f06; }
+    .row { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .row > * { flex: 1; min-width: 140px; }
+    #result {
+      margin-top: 1.5rem;
+      white-space: pre-wrap;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      display: none;
+    }
+    .pass { color: #0f0; }
+    .fail { color: #f80; }
+    .critical { color: #f00; }
+    .warn { color: #ff0; }
+    .skip, .error { color: #888; }
+    .footer {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.7rem;
+      color: #0f05;
+      letter-spacing: 0.3em;
+    }
+  </style>
+</head>
+<body>
+  <h1 class="glitch-title">DEDSEC</h1>
+  <p class="sub">CODE AUDIT SYSTEM</p>
+
+  <div class="panel">
+    <div class="row">
+      <input type="file" id="file" />
+      <select id="lang">
+        <option value="c">C</option>
+        <option value="cpp">C++</option>
+        <option value="py">Python</option>
+        <option value="js">JavaScript</option>
+      </select>
+    </div>
+    <textarea id="code" placeholder="// paste code here or upload a file..."></textarea>
+    <button onclick="runScan()">[ SCAN TARGET ]</button>
+    <div id="result"></div>
+  </div>
+
+  <p class="footer">DEDSEC // WE ARE WATCHING // v1.0</p>
+
+  <script>
+    async function runScan() {
+      const result = document.getElementById('result');
+      result.style.display = 'block';
+      result.innerHTML = '<span class="pass">[*] SCANNING...</span>';
+
+      const fd = new FormData();
+      const fileInput = document.getElementById('file');
+      const code = document.getElementById('code').value;
+      const lang = document.getElementById('lang').value;
+
+      if (fileInput.files.length) {
+        fd.append('file', fileInput.files[0]);
+      } else if (code.trim()) {
+        fd.append('code', code);
+        fd.append('lang', lang);
+      } else {
+        result.innerHTML = '<span class="fail">[!] No target provided</span>';
+        return;
+      }
+
+      try {
+        const res = await fetch('/scan', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.error) {
+          result.innerHTML = `<span class="fail">[!] ${data.error}</span>`;
+          return;
+        }
+        let html = `<span class="pass">[*] TARGET: ${data.file}</span>\n\n`;
+        for (const [name, check] of Object.entries(data.checks)) {
+          const cls = check.status;
+          html += `<span class="${cls}">[${check.status === 'pass' ? '+' : check.status === 'critical' ? '!' : '-'}] ${name.toUpperCase().padEnd(14)} ${check.status.toUpperCase().padEnd(10)} ${check.message}</span>\n`;
+          for (const issue of (check.issues || []).slice(0, 12)) {
+            html += `       L${String(issue.line || '?').padStart(4)} [${issue.severity || ''}] ${issue.detail || ''}\n`;
+            if (issue.code) html += `             > ${issue.code}\n`;
+          }
+          html += '\n';
+        }
+        result.innerHTML = html;
+      } catch (e) {
+        result.innerHTML = `<span class="fail">[!] ${e.message}</span>`;
+      }
+    }
+  </script>
+</body>
+</html>
