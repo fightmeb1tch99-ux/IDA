@@ -28,10 +28,11 @@ pyttsx3>=2.90
 # Optional utilities
 rich>=13.0.0
 
-# Realtime bridge (optional)
+# Web API
+fastapi>=0.110.0
+uvicorn>=0.27.0
+# Optional realtime
 # websockets>=12.0
-# fastapi>=0.110.0
-# uvicorn>=0.27.0
 
 # Minecraft companion (Node.js side — see minecraft/README.md)
 # Requires Node.js + npm install inside minecraft/
