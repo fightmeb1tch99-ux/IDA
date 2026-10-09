@@ -227,8 +227,8 @@ TOOLS = {
     "note_add": add_note,
     "note_list": list_notes,
     "ask_kb": ask_knowledge,
-    "remind": lambda x: "Ок, бро, напоминание поставлено!",
-    "draw": lambda x: "Генерирую шедевр...",
+    "remind": lambda x: "Напоминания пока не подключены. Скажи «запомни …», я сохраню заметку.",
+    "draw": lambda x: "Генерация картинок пока не подключена.",
 }
 
 

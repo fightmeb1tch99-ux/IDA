@@ -43,7 +43,7 @@ SEARCH_API = "https://api.duckduckgo.com"
 
 # Agent identity
 AGENT_NAME = "IDA"
-AGENT_VERSION = "3.0"
+AGENT_VERSION = "4.1"
 AGENT_FULL_NAME = "Инновационный динамический помощник"
 GREETING_EMOJI = "🤖"
 HELP_EMOJI = "📚"

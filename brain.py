@@ -36,15 +36,17 @@ class CommandParser:
             r"который\s+час",
         ],
         "date": [
-            r"(?:какая|какое|скажи|напиши|покажи)?\s*(?:сегодня\s+)?дата|сегодня",
-            r"какой\s+(?:сегодня\s+)?день",
+            r"(?:какая|какое|скажи|напиши|покажи)?\s*(?:сегодняшн\w*\s+)?дата\b",
+            r"какой\s+(?:сегодня\s+)?день\b",
             r"текущая\s+дата",
-            r"какое\s+число",
+            r"какое\s+(?:сегодня\s+)?число",
+            r"^сегодня\??$",
         ],
         "weather": [
-            r"(?:какая|как|скажи|покажи)?\s*погода",
-            r"прогноз\s+погоды",
-            r"температура\s+(?:на\s+улице|сегодня)",
+            r"(?:какая|как|скажи|покажи)?\s*погода(?:\s+в\s+([а-яёa-zA-Z\-\s]+))?",
+            r"прогноз\s+погоды(?:\s+в\s+([а-яёa-zA-Z\-\s]+))?",
+            r"температура\s+(?:на\s+улице|(?:в\s+([а-яёa-zA-Z\-\s]+)))?",
+            r"weather(?:\s+in\s+([a-zA-Z\-\s]+))?",
         ],
         "calc": [
             r"посчитай\s+(.+)",
@@ -100,7 +102,20 @@ class CommandParser:
             for pattern in patterns:
                 match = re.search(pattern, text_lower)
                 if match:
-                    arg = match.group(1).strip() if match.lastindex else None
+                    arg = None
+                    if match.lastindex:
+                        for i in range(1, match.lastindex + 1):
+                            g = match.group(i)
+                            if g:
+                                arg = g.strip().rstrip(".,!?;:")
+                                break
+                    if tool_name == "weather" and not arg:
+                        city_m = re.search(
+                            r"(?:в|in)\s+([а-яёa-zA-Z][а-яёa-zA-Z\-\s]{1,40})",
+                            text_lower,
+                        )
+                        if city_m:
+                            arg = city_m.group(1).strip().rstrip(".,!?;:")
                     log_debug(f"Pattern matched: tool={tool_name}, arg={arg}")
                     return tool_name, arg
         return None, None
@@ -161,7 +176,7 @@ class Brain:
         if re.search(r"\b(привет|хай|здравствуй|hello|hi|hey)\b", text_lower):
             name = self.memory.get("name")
             greeting = f", {name}!" if name else "!"
-            return f"Привет{greeting} Я IDA v4.0. Чем могу помочь? 👋"
+            return f"Привет{greeting} Я IDA v4.1. Чем могу помочь? 👋"
 
         # Remember name
         m = re.search(r"меня зовут\s+(\S+)", text_lower)
@@ -201,7 +216,7 @@ class Brain:
     def _get_llm_response(self, user_input: str) -> str:
         try:
             system_prompt = (
-                f"Ты — IDA (Инновационный динамический помощник) v4.0. "
+                f"Ты — IDA (Инновационный динамический помощник) v4.1. "
                 f"Отвечай по-русски, кратко и дружелюбно. "
                 f"Имя пользователя: {self.memory.get('name', 'неизвестно')}."
             )
@@ -249,7 +264,7 @@ class Brain:
             return f"Ошибка LLM: {err}"
 
     def _get_help_message(self) -> str:
-        return """Доступные команды IDA v4.0:
+        return """Доступные команды IDA v4.1:
 
 Время и дата:
   - «Какое время?» — текущее время

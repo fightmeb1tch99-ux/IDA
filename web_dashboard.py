@@ -3,39 +3,41 @@ IDA Web Dashboard & Chat — Full Web Interface
 FastAPI server for web-based chat and management.
 """
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse, FileResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
 import os
-import json
 from dotenv import load_dotenv
-from memory_manager import MemoryManager
-from brain import Brain
-from tools.tools import TOOLS
-from logger import log_info, log_error
 
 load_dotenv()
 
+from fastapi import FastAPI
+from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
+
+from memory_manager import MemoryManager
+from brain import Brain
+from tools.tools import TOOLS, list_notes
+from logger import log_info, log_error
+
 app = FastAPI(title="IDA Web Chat")
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=os.getenv("CORS_ORIGINS", "*").split(","),
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Initialize IDA
 memory_mgr = MemoryManager()
-memory = memory_mgr.load()
-brain = Brain(memory)
+brain = Brain(memory_mgr.memory)
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "service": "ida-web"}
+
 
 @app.get("/", response_class=HTMLResponse)
 async def chat_interface():
-    """Serve the web chat interface."""
     try:
         with open("web_chat.html", "r", encoding="utf-8") as f:
             return f.read()
@@ -49,9 +51,9 @@ async def chat_interface():
         </html>
         """
 
+
 @app.post("/api/chat")
 async def chat(request: dict):
-    """Process chat messages and return responses."""
     try:
         message = request.get("message", "").strip()
         if not message:
@@ -59,62 +61,81 @@ async def chat(request: dict):
 
         log_info(f"Web Chat: {message}")
 
-        # 1. Decide if a tool is needed
         tool_name, tool_arg = brain.decide_tool(message)
-        
+
         tool_result = None
         if tool_name and tool_name in TOOLS:
             try:
-                tool_result = TOOLS[tool_name](tool_arg) if tool_arg else TOOLS[tool_name]()
+                tool_fn = TOOLS[tool_name]
+                if tool_arg is not None:
+                    tool_result = tool_fn(tool_arg)
+                else:
+                    tool_result = tool_fn()
+            except TypeError:
+                try:
+                    tool_result = TOOLS[tool_name](tool_arg) if tool_arg else TOOLS[tool_name]()
+                except Exception as e:
+                    tool_result = f"Ошибка инструмента: {e}"
             except Exception as e:
-                tool_result = f"Ошибка инструмента: {str(e)}"
+                tool_result = f"Ошибка инструмента: {e}"
 
-        # 2. Generate final response
         response = brain.generate_response(message, tool_result)
-        
-        # 3. Update memory
         brain.add_to_history(message, response)
-        memory_mgr.save()
-        
+
+        if "history" not in brain.memory:
+            brain.memory["history"] = []
+        brain.memory["history"].append({"user": message, "response": response})
+        brain.memory["history"] = brain.memory["history"][-200:]
+
+        memory_mgr.save(brain.memory)
+
         return {"response": response}
     except Exception as e:
         log_error("Chat error", e)
-        return {"error": str(e)}
+        return {"error": "Внутренняя ошибка сервера"}
+
 
 @app.get("/api/notes")
 async def get_notes():
-    """Get all notes."""
     try:
-        notes = memory.get("notes", [])
-        return {"notes": notes}
+        raw = list_notes()
+        return {"notes": raw}
     except Exception as e:
-        return {"error": str(e)}
+        log_error("Notes error", e)
+        return {"error": "Не удалось загрузить заметки"}
+
 
 @app.get("/api/history")
 async def get_history():
-    """Get chat history."""
     try:
-        history = memory.get("history", [])
-        return {"history": history[-50:]}  # Last 50 messages
+        history = brain.memory.get("history") or [
+            {"user": h.get("user"), "response": h.get("response")}
+            for h in brain.get_history()
+        ]
+        return {"history": history[-50:]}
     except Exception as e:
-        return {"error": str(e)}
+        log_error("History error", e)
+        return {"error": "Не удалось загрузить историю"}
+
 
 @app.get("/api/stats")
 async def get_stats():
-    """Get usage statistics."""
     try:
-        history = memory.get("history", [])
-        notes = memory.get("notes", [])
+        history = brain.memory.get("history") or brain.get_history()
+        notes_text = list_notes()
+        notes_count = 0 if "Заметок пока нет" in notes_text else notes_text.count("\n  ")
         return {
             "total_messages": len(history),
-            "total_notes": len(notes),
-            "status": "online"
+            "total_notes": notes_count,
+            "status": "online",
+            "version": "4.1",
         }
     except Exception as e:
-        return {"error": str(e)}
+        log_error("Stats error", e)
+        return {"error": "Не удалось получить статистику"}
+
 
 if __name__ == "__main__":
     import uvicorn
-    print("🌐 IDA Web Chat starting on http://localhost:8000")
-    print("📱 Access from browser: http://localhost:8000")
+    print("IDA Web Chat starting on http://localhost:8000")
     uvicorn.run(app, host="0.0.0.0", port=8000)
