@@ -1,4 +1,13 @@
 {
-  "interactions_count": 22,
-  "name": "сохрани мое имя айтал"
+  "interactions_count": 24,
+  "name": "Айтал",
+  "profile": {
+    "name": "Айтал",
+    "city": "Якутск",
+    "language": "ru",
+    "facts": [],
+    "summary": ""
+  },
+  "city": "Якутск",
+  "last_updated": "2026-10-10T14:37:04.197718"
 }

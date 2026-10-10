@@ -160,6 +160,30 @@ class Brain:
     def decide_tool(self, text: str):
         return self.parser.parse(text)
 
+    def maybe_update_profile(self, text: str) -> None:
+        """Вытащить имя/город/факты из реплики пользователя."""
+        import re
+        low = text.lower().strip()
+        m = re.search(r"меня зовут\s+([\w\-]+)", low)
+        if m:
+            self.memory["name"] = m.group(1).capitalize()
+            self.memory.setdefault("profile", {})["name"] = self.memory["name"]
+        m = re.search(r"(?:я живу в|мой город|город)\s+([\w\-\s]+?)(?:[.!?]|$)", low)
+        if m:
+            city = m.group(1).strip().title()
+            if len(city) < 40:
+                self.memory["city"] = city
+                self.memory.setdefault("profile", {})["city"] = city
+        m = re.search(r"запомни(?:\s+что)?\s+(.+)", low)
+        if m:
+            fact = m.group(1).strip()
+            if fact and len(fact) < 200:
+                facts = list(self.memory.get("facts") or [])
+                if fact not in facts:
+                    facts.append(fact)
+                    self.memory["facts"] = facts[-30:]
+                    self.memory.setdefault("profile", {})["facts"] = self.memory["facts"]
+
     def generate_response(self, user_input: str, tool_result=None) -> str:
         text_lower = user_input.lower()
 
@@ -171,7 +195,7 @@ class Brain:
         if re.search(r"\b(привет|хай|здравствуй|hello|hi|hey)\b", text_lower):
             name = self.memory.get("name")
             greeting = f", {name}!" if name else "!"
-            return f"Привет{greeting} Я IDA v4.0. Чем могу помочь? 👋"
+            return f"Привет{greeting} Я IDA — твой Джарвис. Чем помочь? 👋"
 
         # Remember name
         m = re.search(r"меня зовут\s+(\S+)", text_lower)
@@ -210,6 +234,11 @@ class Brain:
 
     def _get_llm_response(self, user_input: str) -> str:
         try:
+            profile = self.memory.get("profile") or {}
+            name = profile.get("name") or self.memory.get("name") or "неизвестно"
+            city = profile.get("city") or self.memory.get("city") or "не указан"
+            facts = profile.get("facts") or self.memory.get("facts") or []
+            facts_s = "; ".join(facts[-5:]) if facts else "нет"
             system_prompt = (
                 "Ты — IDA, персональный ИИ-компаньон в духе ДЖАРВИСА (JARVIS). "
                 "Ты живой цифровой аватар: внимательный, спокойный, чуть ироничный, всегда на стороне пользователя. "
@@ -218,8 +247,8 @@ class Brain:
                 "Проявляй инициативу: предлагай следующий шаг, предупреждай о рисках, напоминай о контексте. "
                 "У тебя есть аватар (Live2D) и голос: отвечай так, будто говоришь вслух, живо и естественно. "
                 "Не выдумывай факты. Если чего-то не знаешь — скажи прямо и предложи, как узнать. "
-                f"Имя пользователя: {self.memory.get('name') or 'неизвестно'}. "
-                f"Версия: IDA v5.1."
+                f"Имя пользователя: {name}. Город: {city}. Известные факты: {facts_s}. "
+                "Версия: IDA v5.2."
             )
             messages = [{"role": "system", "content": system_prompt}]
             for entry in self.conversation_history[-CONTEXT_WINDOW:]:
@@ -265,7 +294,7 @@ class Brain:
             return f"Ошибка LLM: {err}"
 
     def _get_help_message(self) -> str:
-        return """Доступные команды IDA v4.0:
+        return """Доступные команды IDA v5.2:
 
 Время и дата:
   - «Какое время?» — текущее время

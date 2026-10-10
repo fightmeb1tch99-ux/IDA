@@ -39,3 +39,6 @@ uvicorn>=0.27.0
 # Discord companion
 discord.py>=2.4.0
 PyNaCl>=1.5.0
+
+# TTS (web/avatar audio)
+edge-tts>=6.1.0

@@ -34,13 +34,18 @@
 
 ## 📅 Последнее обновление
 
-**2026-10-10** — мобильный клиент (Android / iOS), режим Джарвиса для аватара, единый realtime.
+**2026-10-10** — качество: Unified API, профиль пользователя, TTS для аватара.
 
-- Чат с телефона через Expo (`ida-app`) → API на ПК
-- Аватар реагирует на реплики (`avatar_state`: thinking / speaking / idle)
-- System prompt в стиле JARVIS (инициатива, действия, живая речь)
-- Гайд: [MOBILE.md](MOBILE.md)
-- Запуск по-прежнему: `./start.sh`
+- **Единый API** `api_server.py` на `:8000` — `/api/chat`, `/ws`, `/api/profile`, `/api/tts`
+- **Профиль** в памяти: имя, город, факты, summary (учитывается в промпте Джарвиса)
+- **TTS** `synthesize_to_file` (edge-tts / pyttsx3) + хук `avatar_state` для lip-sync
+- Launcher поднимает один сервис вместо web+realtime
+- Мобилка: WS на том же хосте `/ws`
+
+Запуск: `./start.sh`
+
+---
+
 
 ---
 

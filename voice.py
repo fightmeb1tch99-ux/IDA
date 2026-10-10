@@ -137,3 +137,74 @@ def speak_piper(text: str, model_path: str | None = None) -> None:
     """Placeholder for Piper TTS."""
     log_warning("Piper not integrated yet. Falling back to current TTS.")
     speak(text)
+
+
+# ─── File TTS for web / avatar lip-sync ───────────────────────────
+def synthesize_to_file(text: str, out_dir: str | None = None) -> str | None:
+    """
+    Generate audio file for avatar / mobile playback.
+    Prefer edge-tts (mp3), fallback pyttsx3 (wav) if available.
+    Returns absolute path or None.
+    """
+    if not text:
+        return None
+    clean = (
+        text.replace("**", "")
+        .replace("*", "")
+        .replace("`", "")
+        .replace("#", "")
+        .strip()
+    )
+    if not clean:
+        return None
+
+    from pathlib import Path
+    import hashlib
+
+    base = Path(out_dir or Path(__file__).resolve().parent / "logs" / "tts")
+    base.mkdir(parents=True, exist_ok=True)
+    digest = hashlib.md5(clean.encode("utf-8")).hexdigest()[:12]
+
+    # 1) edge-tts (online, good quality, no local voice packs)
+    try:
+        import asyncio
+        import edge_tts
+
+        out = base / f"ida_{digest}.mp3"
+
+        async def _gen():
+            comm = edge_tts.Communicate(clean, voice="ru-RU-SvetlanaNeural")
+            await comm.save(str(out))
+
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                import concurrent.futures
+
+                with concurrent.futures.ThreadPoolExecutor(1) as pool:
+                    pool.submit(lambda: asyncio.run(_gen())).result(timeout=60)
+            else:
+                loop.run_until_complete(_gen())
+        except RuntimeError:
+            asyncio.run(_gen())
+
+        if out.exists() and out.stat().st_size > 0:
+            log_info(f"TTS file (edge-tts): {out}")
+            return str(out)
+    except Exception as e:
+        log_warning(f"edge-tts unavailable: {e}")
+
+    # 2) pyttsx3 offline wav
+    try:
+        _init_tts()
+        if _engine and _tts_ready:
+            out = base / f"ida_{digest}.wav"
+            _engine.save_to_file(clean, str(out))
+            _engine.runAndWait()
+            if out.exists() and out.stat().st_size > 0:
+                log_info(f"TTS file (pyttsx3): {out}")
+                return str(out)
+    except Exception as e:
+        log_warning(f"pyttsx3 file TTS failed: {e}")
+
+    return None

@@ -52,11 +52,22 @@ class MemoryManager:
     def _initialize_memory(self):
         return {
             "name": None,
+            "city": None,
+            "language": "ru",
             "created_at": datetime.now().isoformat(),
             "last_updated": datetime.now().isoformat(),
             "interactions_count": 0,
             "preferences": {},
+            "facts": [],
+            "summary": "",
             "custom_data": {},
+            "profile": {
+                "name": None,
+                "city": None,
+                "language": "ru",
+                "facts": [],
+                "summary": "",
+            },
         }
 
     def save(self, memory=None):
@@ -106,3 +117,71 @@ class MemoryManager:
             "last_updated": self.memory.get("last_updated"),
             "interactions_count": self.memory.get("interactions_count", 0),
         }
+
+    def _ensure_profile(self):
+        if "profile" not in self.memory or not isinstance(self.memory.get("profile"), dict):
+            self.memory["profile"] = {
+                "name": self.memory.get("name"),
+                "city": self.memory.get("city"),
+                "language": self.memory.get("language") or "ru",
+                "facts": list(self.memory.get("facts") or []),
+                "summary": self.memory.get("summary") or "",
+            }
+        # sync top-level convenience fields
+        prof = self.memory["profile"]
+        if self.memory.get("name") and not prof.get("name"):
+            prof["name"] = self.memory["name"]
+        if self.memory.get("city") and not prof.get("city"):
+            prof["city"] = self.memory["city"]
+        return prof
+
+    def get_profile(self):
+        return dict(self._ensure_profile())
+
+    def get_profile_public(self):
+        p = self._ensure_profile()
+        return {
+            "name": p.get("name"),
+            "city": p.get("city"),
+            "language": p.get("language") or "ru",
+            "facts_count": len(p.get("facts") or []),
+        }
+
+    def update_profile(self, name=None, city=None, language=None, preferences=None, facts=None, summary=None):
+        prof = self._ensure_profile()
+        if name is not None:
+            prof["name"] = name
+            self.memory["name"] = name
+        if city is not None:
+            prof["city"] = city
+            self.memory["city"] = city
+        if language is not None:
+            prof["language"] = language
+            self.memory["language"] = language
+        if preferences is not None:
+            self.memory.setdefault("preferences", {}).update(preferences)
+        if facts is not None:
+            prof["facts"] = list(facts)
+            self.memory["facts"] = list(facts)
+        if summary is not None:
+            prof["summary"] = summary
+            self.memory["summary"] = summary
+        self.memory["profile"] = prof
+        self.save()
+        return self.get_profile()
+
+    def add_fact(self, fact: str):
+        if not fact or not str(fact).strip():
+            return self.get_profile()
+        fact = str(fact).strip()
+        prof = self._ensure_profile()
+        facts = list(prof.get("facts") or [])
+        if fact not in facts:
+            facts.append(fact)
+            # keep last 30 facts
+            facts = facts[-30:]
+            prof["facts"] = facts
+            self.memory["facts"] = facts
+            self.memory["profile"] = prof
+            self.save()
+        return self.get_profile()

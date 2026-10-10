@@ -117,18 +117,17 @@ def ensure_env():
 
 
 def start_web() -> subprocess.Popen | None:
+    """Единый API: HTTP + WebSocket + профиль + TTS на :8000."""
     return spawn(
-        "web",
-        [sys.executable, "web_dashboard.py"],
+        "api",
+        [sys.executable, "api_server.py"],
     )
 
 
 def start_realtime() -> subprocess.Popen | None:
-    """WebSocket bridge for web avatar + mobile (port 8765)."""
-    return spawn(
-        "realtime",
-        [sys.executable, "-m", "realtime.bridge"],
-    )
+    """Realtime встроен в api_server (:8000/ws). Отдельный процесс не нужен."""
+    print("  · realtime  встроен в api_server (/ws)")
+    return None
 
 
 def start_telegram() -> subprocess.Popen | None:
@@ -161,8 +160,7 @@ def run_cli():
 def cmd_status():
     banner()
     print("Что поднимется при `python launcher.py all`:\n")
-    print("  web       → всегда (порт 8000)")
-    print("  realtime  → всегда (ws :8765, аватар + телефон)")
+    print("  api       → Unified API :8000 (chat + /ws + profile + tts)")
     print("  cli       → интерактив в этом терминале")
     print(
         f"  telegram  → {'да' if has_token('TELEGRAM_BOT_TOKEN') else 'нет (токен не задан)'}"
@@ -188,8 +186,9 @@ def cmd_all(with_cli: bool = True):
     start_telegram()
     start_discord()
     time.sleep(1.2)
-    print("\nWeb:      http://127.0.0.1:8000")
-    print("Realtime: ws://127.0.0.1:8765/ws  (аватар + смартфон)")
+    print("\nAPI:      http://127.0.0.1:8000")
+    print("WebSocket: ws://127.0.0.1:8000/ws  (аватар + смартфон)")
+    print("Профиль:  http://127.0.0.1:8000/api/profile")
     print("Логи: logs/*.log\n")
 
     if with_cli:
@@ -250,9 +249,9 @@ def main():
         ensure_env()
         signal.signal(signal.SIGINT, stop_children)
         signal.signal(signal.SIGTERM, stop_children)
-        print("Запуск web:\n")
+        print("Запуск Unified API:\n")
         start_web()
-        print("\nhttp://127.0.0.1:8000  — Ctrl+C стоп")
+        print("\nhttp://127.0.0.1:8000  ws://127.0.0.1:8000/ws  — Ctrl+C стоп")
         while True:
             time.sleep(3600)
 

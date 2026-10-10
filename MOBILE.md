@@ -1,6 +1,6 @@
 # IDA на смартфоне (Android и iOS)
 
-Дата обновления: **2026-10-10**
+Дата обновления: **2026-10-10** (unified API)
 
 IDA работает с телефона как компаньон в стиле **Джарвиса**: чат, статус связи, голос (базовый), Live2D-аватар на вебе реагирует на диалог через realtime.
 
@@ -11,9 +11,12 @@ cd IDA
 ./start.sh
 ```
 
-Поднимается:
+Поднимается (Unified API):
+- всё на одном порту **8000** (HTTP + WebSocket)
+
+Раньше отдельно, теперь:
 - HTTP API / веб-чат → `http://ПК:8000`
-- Realtime WebSocket → `ws://ПК:8765/ws`
+- Realtime WebSocket → `ws://ПК:8000/ws`
 
 Узнай IP компьютера в Wi‑Fi:
 - Linux/macOS: `ip a` или `ifconfig`
@@ -27,7 +30,7 @@ cd IDA
 cd ida-app
 # создай .env
 echo "EXPO_PUBLIC_API_URL=http://192.168.1.42:8000" > .env
-echo "EXPO_PUBLIC_WS_URL=ws://192.168.1.42:8765/ws" >> .env
+echo "EXPO_PUBLIC_WS_URL=ws://192.168.1.42:8000/ws" >> .env
 
 npx expo start
 ```

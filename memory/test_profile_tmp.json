@@ -1,0 +1,19 @@
+{
+  "name": "TestUser",
+  "city": "Yakutsk",
+  "language": "ru",
+  "created_at": "2026-10-10T14:36:03.176256",
+  "last_updated": "2026-10-10T14:36:03.176281",
+  "interactions_count": 1,
+  "preferences": {},
+  "facts": [],
+  "summary": "",
+  "custom_data": {},
+  "profile": {
+    "name": "TestUser",
+    "city": "Yakutsk",
+    "language": "ru",
+    "facts": [],
+    "summary": ""
+  }
+}
