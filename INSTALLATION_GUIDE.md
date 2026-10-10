@@ -32,8 +32,8 @@ sudo apt install python3 python3-pip git
 ### Шаг 2: Клонируй репозиторий
 
 ```bash
-git clone https://github.com/fightmeb1tch99-ux/SYP-PROJECT
-cd SYP-PROJECT
+git clone https://github.com/fightmeb1tch99-ux/IDA
+cd IDA
 git checkout dev
 ```
 
@@ -117,8 +117,8 @@ pkg install python git -y
 **Шаг 4: Клонируй проект**
 ```bash
 cd ~
-git clone https://github.com/fightmeb1tch99-ux/SYP-PROJECT
-cd SYP-PROJECT
+git clone https://github.com/fightmeb1tch99-ux/IDA
+cd IDA
 git checkout dev
 ```
 
@@ -162,7 +162,7 @@ npm install -g pnpm
 
 **Шаг 2: Перейди в папку приложения**
 ```bash
-cd ~/SYP-PROJECT/mobile-app
+cd ~/IDA/ida-app
 ```
 
 **Шаг 3: Установи зависимости**
@@ -218,7 +218,7 @@ const OPENAI_API_KEY = 'sk-proj-ТВО_КЛЮЧ_ЗДЕСЬ';
 **Установка:**
 
 ```bash
-cd ~/SYP-PROJECT/mobile-app
+cd ~/IDA/ida-app
 npm install -g eas-cli
 eas build --platform android --local
 ```
@@ -308,8 +308,8 @@ npm start
 
 ### На ПК (самый быстрый способ):
 ```bash
-git clone https://github.com/fightmeb1tch99-ux/SYP-PROJECT
-cd SYP-PROJECT
+git clone https://github.com/fightmeb1tch99-ux/IDA
+cd IDA
 git checkout dev
 pip install -r requirements.txt
 export OPENAI_API_KEY="sk-proj-ТВО_КЛЮЧ"
@@ -320,8 +320,8 @@ python3 main.py
 ```bash
 pkg update && pkg upgrade -y
 pkg install python git -y
-git clone https://github.com/fightmeb1tch99-ux/SYP-PROJECT
-cd SYP-PROJECT && git checkout dev
+git clone https://github.com/fightmeb1tch99-ux/IDA
+cd IDA && git checkout dev
 pip install -r requirements.txt
 export OPENAI_API_KEY="sk-proj-ТВО_КЛЮЧ"
 python3 main.py
@@ -331,7 +331,7 @@ python3 main.py
 ```bash
 pkg install nodejs -y
 npm install -g pnpm
-cd ~/SYP-PROJECT/mobile-app
+cd ~/IDA/ida-app
 pnpm install
 pnpm dev
 # Отсканируй QR-код в Expo Go
@@ -345,7 +345,7 @@ pnpm dev
 2. **Проверь API ключ** - должен быть валидным
 3. **Обнови зависимости** - `pip install --upgrade -r requirements.txt`
 4. **Посмотри логи** - в папке `logs/`
-5. **Создай issue на GitHub** - https://github.com/fightmeb1tch99-ux/SYP-PROJECT/issues
+5. **Создай issue на GitHub** - https://github.com/fightmeb1tch99-ux/IDA/issues
 
 ---
 

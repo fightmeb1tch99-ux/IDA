@@ -1,41 +1,29 @@
 """
-Test script for IDA OS v3.0
-Tests Orchestrator, Memory, and Reasoning.
+Smoke tests for IDA main entry and core modules.
 """
-import asyncio
-import os
-from main import IDAOS
+from pathlib import Path
+from brain import Brain
+from memory_manager import MemoryManager
 
-async def test_os():
-    print("--- Starting IDA OS v3.0 Test ---")
-    os_instance = IDAOS()
-    
-    # Test 1: Simple reasoning and planning
-    print("\nTest 1: Reasoning & Planning")
-    response1 = await os_instance.process_input("Привет! Расскажи, какой сегодня план на день, если я хочу выучить Python?")
-    print(f"Response: {response1}")
-    
-    # Test 2: Semantic Memory Search
-    print("\nTest 2: Semantic Memory (Searching for Python plan)")
-    context = os_instance.memory_manager.get_context("Python")
-    print(f"Context Found: {context['semantic_context']}")
-    
-    # Test 3: Structured SQLite Storage
-    print("\nTest 3: SQLite Storage Check")
-    history = os_instance.memory_manager.db.get_recent_history(limit=5)
-    print(f"Recent History from DB: {len(history)} items")
 
-    # Test 4: Browser Automation
-    print("\nTest 4: Browser Automation (Searching for IDA OS news)")
-    response4 = await os_instance.process_input("Найди в интернете последние новости про искусственный интеллект за сегодня.")
-    print(f"Browser Response: {response4}")
+def test_memory_manager_loads():
+    mm = MemoryManager()
+    mem = mm.load()
+    assert isinstance(mem, dict)
 
-    # Test 5: Plugin System
-    print("\nTest 5: Plugin System (Weather Plugin)")
-    response5 = await os_instance.process_input("Какая сейчас погода в Москве?")
-    print(f"Plugin Response: {response5}")
-    
-    print("\n--- Test Completed ---")
 
-if __name__ == "__main__":
-    asyncio.run(test_os())
+def test_brain_without_api_key():
+    brain = Brain({})
+    assert brain is not None
+    tool, _ = brain.decide_tool("какое время")
+    assert tool == "time"
+
+
+def test_main_version_string():
+    main_text = Path("main.py").read_text(encoding="utf-8")
+    assert "v5.1" in main_text
+
+
+def test_health_endpoint_exists():
+    server_text = Path("server.py").read_text(encoding="utf-8")
+    assert "/health" in server_text

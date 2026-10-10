@@ -34,6 +34,10 @@ class ChatRequest(BaseModel):
 async def root():
     return {"status": "online", "name": "IDA API Server", "version": "1.0"}
 
+@app.get("/health")
+async def health():
+    return {"status": "ok", "service": "ida-api"}
+
 @app.post("/v1/chat")
 async def chat_proxy(request: ChatRequest):
     """Securely proxy chat requests to OpenAI."""

@@ -33,6 +33,10 @@ memory_mgr = MemoryManager()
 memory = memory_mgr.load()
 brain = Brain(memory)
 
+@app.get("/health")
+async def health():
+    return {"status": "ok", "service": "ida-web"}
+
 @app.get("/", response_class=HTMLResponse)
 async def chat_interface():
     """Serve the web chat interface."""

@@ -53,7 +53,8 @@ class CommandParser:
             r"calculate\s+(.+)",
         ],
         "create_file": [
-            r"(?:создай|сделай)\s+файл\s+(.+)",
+            r"(?:создай|сделай|создать)\s+файл\s+(.+)",
+            r"новый\s+файл\s+(.+)",
             r"сделай\s+файл\s+(.+)",
             r"create\s+file\s+(.+)",
         ],
@@ -78,7 +79,8 @@ class CommandParser:
             r"мои\s+заметки",
         ],
         "help": [
-            r"помощь|помоги|help",
+            r"помощь|помоги|help|команды",
+            r"что\s+ты\s+умеешь",
             r"help",
         ],
         "ask_kb": [
@@ -96,6 +98,14 @@ class CommandParser:
     def parse(self, text: str):
         """Return (tool_name, argument) or (None, None)."""
         text_lower = text.lower().strip()
+        if any(k in text_lower for k in ("гугли", "google", "поищи в", "найди в интернете")):
+            for pattern in self.PATTERNS.get("search", []):
+                match = re.search(pattern, text_lower)
+                if match:
+                    arg = match.group(1).strip() if match.lastindex else text_lower
+                    log_debug(f"Pattern matched: tool=search, arg={arg}")
+                    return "search", arg
+            return "search", text_lower
         for tool_name, patterns in self.PATTERNS.items():
             for pattern in patterns:
                 match = re.search(pattern, text_lower)

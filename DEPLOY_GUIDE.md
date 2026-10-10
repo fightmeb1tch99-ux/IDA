@@ -9,7 +9,7 @@
 
 1.  **Создай аккаунт** на [Render.com](https://render.com/).
 2.  Нажми **New +** -> **Web Service**.
-3.  Подключи свой GitHub репозиторий `SYP-PROJECT`.
+3.  Подключи свой GitHub репозиторий `IDA`.
 4.  **Настройки:**
     - **Runtime:** `Python 3`
     - **Build Command:** `pip install -r requirements.txt`

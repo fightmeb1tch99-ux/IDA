@@ -87,3 +87,22 @@ class MemoryManager:
         except Exception as e:
             log_error("Failed to save memory", e)
             return False
+
+    def get(self, key, default=None):
+        return self.memory.get(key, default)
+
+    def set(self, key, value):
+        self.memory[key] = value
+        return value
+
+    def increment_interactions(self):
+        self.memory["interactions_count"] = self.memory.get("interactions_count", 0) + 1
+        return self.memory["interactions_count"]
+
+    def get_stats(self):
+        return {
+            "name": self.memory.get("name"),
+            "created_at": self.memory.get("created_at"),
+            "last_updated": self.memory.get("last_updated"),
+            "interactions_count": self.memory.get("interactions_count", 0),
+        }
