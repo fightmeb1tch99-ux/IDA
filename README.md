@@ -91,31 +91,52 @@
 
 ---
 
-## 🚀 Быстрый старт
-
-### 1. Python-агент (Termux / ПК)
+## 🚀 Быстрый старт (одна команда)
 
 ```bash
 git clone https://github.com/fightmeb1tch99-ux/IDA.git
 cd IDA
 pip install -r requirements.txt
 cp .env.example .env
-# Добавь GROQ_API_KEY или OPENAI_API_KEY
-python3 main.py
+# Добавь GROQ_API_KEY (бесплатно: https://console.groq.com/keys)
+./start.sh
+```
+
+Это поднимает:
+- **Web** на http://127.0.0.1:8000
+- **CLI** в этом же терминале
+- **Telegram / Discord** — если токены есть в `.env`
+
+Другие режимы:
+
+```bash
+./start.sh cli      # только терминал
+./start.sh web      # только веб
+./start.sh bots     # только боты
+./start.sh status   # что запустится
+python3 launcher.py all --no-cli   # сервисы без интерактива
+```
+
+### Docker
+
+```bash
+cp .env.example .env   # ключи
+docker compose up -d --build
+# http://localhost:8000
 ```
 
 ### Termux (Android)
 
 ```bash
-pkg install python git nodejs
+pkg install python git
 git clone https://github.com/fightmeb1tch99-ux/IDA.git
 cd IDA
 bash termux_setup.sh
 nano .env   # GROQ_API_KEY=gsk_...
-python main.py
+./start.sh cli
 ```
 
-### 2. Web Dashboard
+### React Dashboard (опционально, отдельный UI)
 
 ```bash
 pnpm install

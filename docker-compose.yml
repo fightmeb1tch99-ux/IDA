@@ -1,46 +1,26 @@
-version: '3.8'
+version: "3.8"
 
 services:
-  ida-backend:
+  ida:
     build: .
-    container_name: ida-backend
+    container_name: ida
     ports:
       - "8000:8000"
-      - "5000:5000"
+    env_file:
+      - .env
     environment:
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OPENAI_API_BASE=${OPENAI_API_BASE}
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - LOG_LEVEL=INFO
     volumes:
       - ./memory:/app/memory
       - ./logs:/app/logs
+      - ./knowledge:/app/knowledge
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
-
-  ida-frontend:
-    image: node:22-alpine
-    container_name: ida-frontend
-    working_dir: /app
-    command: npm run dev
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./ida-app:/app
-    environment:
-      - EXPO_PUBLIC_API_URL=http://localhost:8000
-    restart: unless-stopped
-    depends_on:
-      - ida-backend
-
-volumes:
-  memory:
-  logs:
+      start_period: 20s
 
 networks:
   default:

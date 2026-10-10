@@ -102,7 +102,7 @@ def single_command(brain: Brain, command: str):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="IDA — Инновационный Динамический AI-помощник")
+    parser = argparse.ArgumentParser(description="IDA — Инновационный Динамический AI-помощник (CLI). Полный стек: ./start.sh или python launcher.py")
     parser.add_argument("command", nargs="?", help="Одна команда для выполнения")
     parser.add_argument("--stats", action="store_true", help="Показать статистику")
     parser.add_argument("--version", action="store_true", help="Показать версию")
