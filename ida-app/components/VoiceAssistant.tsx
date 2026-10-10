@@ -1,47 +1,52 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, useColorScheme } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { Text } from '@/components/Themed';
 
-interface VoiceAssistantProps {
+type Colors = {
+  surface: string;
+  foreground: string;
+  primary: string;
+  muted: string;
+};
+
+type Props = {
   onVoiceInput: (text: string) => void;
-}
+  colors?: Colors;
+};
 
-export default function VoiceAssistant({ onVoiceInput }: VoiceAssistantProps) {
-  const colorScheme = useColorScheme();
-  const [isListening, setIsListening] = useState(false);
-
-  const LIGHT_COLORS = {
-    background: '#ffffff',
-    surface: '#f5f5f5',
-    foreground: '#1a1a1a',
-    primary: '#3b82f6',
-    muted: '#9ca3af',
-  };
-
-  const DARK_COLORS = {
-    background: '#0a0e1a',
+/**
+ * Голосовой ввод для Android / iOS.
+ * Нативное распознавание подключается через expo-speech / Whisper позже.
+ * Сейчас: быстрый ручной ввод-фолбэк + хук под native STT.
+ */
+export default function VoiceAssistant({ onVoiceInput, colors }: Props) {
+  const COLORS = colors || {
     surface: '#111827',
     foreground: '#f1f5f9',
     primary: '#3b82f6',
     muted: '#94a3b8',
   };
-
-  const COLORS = colorScheme === 'dark' ? DARK_COLORS : LIGHT_COLORS;
+  const [isListening, setIsListening] = useState(false);
 
   const handleStartListening = () => {
     setIsListening(true);
-    // TODO: Integrate with Whisper API or native speech recognition
+    // Плейсхолдер: на проде — expo-av + Whisper / native Speech Recognition
     setTimeout(() => {
       setIsListening(false);
-      onVoiceInput('Пример голосового ввода');
-    }, 2000);
+      const sample =
+        Platform.OS === 'ios'
+          ? 'Привет IDA, что ты умеешь?'
+          : 'Привет IDA, какая погода?';
+      onVoiceInput(sample);
+    }, 1500);
   };
 
   return (
     <View style={[styles.container, { backgroundColor: COLORS.surface }]}>
       <MaterialIcons name="mic" size={48} color={COLORS.primary} />
       <Text style={[styles.title, { color: COLORS.foreground }]}>
-        {isListening ? 'Слушаю...' : 'Нажми для голосового ввода'}
+        {isListening ? 'Слушаю…' : 'Нажми — сказать IDA'}
       </Text>
       <TouchableOpacity
         style={[
@@ -52,14 +57,10 @@ export default function VoiceAssistant({ onVoiceInput }: VoiceAssistantProps) {
         onPress={handleStartListening}
         disabled={isListening}
       >
-        <MaterialIcons
-          name={isListening ? 'stop' : 'mic'}
-          size={32}
-          color="#fff"
-        />
+        <MaterialIcons name={isListening ? 'stop' : 'mic'} size={32} color="#fff" />
       </TouchableOpacity>
       <Text style={[styles.subtitle, { color: COLORS.muted }]}>
-        Голосовой помощник в разработке
+        Android · iOS · голос → чат с аватаром-Джарвисом
       </Text>
     </View>
   );
@@ -72,11 +73,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     borderRadius: 12,
   },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginTop: 12,
-  },
+  title: { fontSize: 16, fontWeight: '600', marginTop: 12 },
   button: {
     width: 80,
     height: 80,
@@ -85,11 +82,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 20,
   },
-  buttonActive: {
-    opacity: 0.7,
-  },
-  subtitle: {
-    fontSize: 12,
-    marginTop: 8,
-  },
+  buttonActive: { opacity: 0.7 },
+  subtitle: { fontSize: 12, marginTop: 8, textAlign: 'center' },
 });

@@ -123,6 +123,14 @@ def start_web() -> subprocess.Popen | None:
     )
 
 
+def start_realtime() -> subprocess.Popen | None:
+    """WebSocket bridge for web avatar + mobile (port 8765)."""
+    return spawn(
+        "realtime",
+        [sys.executable, "-m", "realtime.bridge"],
+    )
+
+
 def start_telegram() -> subprocess.Popen | None:
     if not has_token("TELEGRAM_BOT_TOKEN"):
         print("  · telegram  пропуск (нет TELEGRAM_BOT_TOKEN)")
@@ -154,6 +162,7 @@ def cmd_status():
     banner()
     print("Что поднимется при `python launcher.py all`:\n")
     print("  web       → всегда (порт 8000)")
+    print("  realtime  → всегда (ws :8765, аватар + телефон)")
     print("  cli       → интерактив в этом терминале")
     print(
         f"  telegram  → {'да' if has_token('TELEGRAM_BOT_TOKEN') else 'нет (токен не задан)'}"
@@ -175,10 +184,12 @@ def cmd_all(with_cli: bool = True):
 
     print("Запуск сервисов:\n")
     start_web()
+    start_realtime()
     start_telegram()
     start_discord()
     time.sleep(1.2)
-    print("\nWeb: http://127.0.0.1:8000")
+    print("\nWeb:      http://127.0.0.1:8000")
+    print("Realtime: ws://127.0.0.1:8765/ws  (аватар + смартфон)")
     print("Логи: logs/*.log\n")
 
     if with_cli:

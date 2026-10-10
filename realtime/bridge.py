@@ -109,13 +109,25 @@ if _AVAILABLE:
                 if msg.get("type") == "chat" or "message" in msg:
                     user_text = msg.get("message") or msg.get("data") or ""
                     # Notify clients that IDA is thinking
+                    # Аватар: слушает → думает → говорит (как Джарвис)
+                    await broadcast({
+                        "type": "avatar_state",
+                        "data": {"state": "thinking", "isSpeaking": False, "isListening": False}
+                    })
                     await broadcast({"type": "status", "data": {"speaking": False, "thinking": True}})
-                    # Run agent in thread to not block event loop
                     loop = asyncio.get_event_loop()
                     reply = await loop.run_in_executor(None, _process, user_text)
                     await broadcast({
+                        "type": "avatar_state",
+                        "data": {"state": "speaking", "isSpeaking": True, "isListening": False, "text": reply}
+                    })
+                    await broadcast({
                         "type": "chat",
                         "data": {"role": "assistant", "text": reply}
+                    })
+                    await broadcast({
+                        "type": "avatar_state",
+                        "data": {"state": "idle", "isSpeaking": False, "isListening": True}
                     })
                     await broadcast({"type": "status", "data": {"thinking": False, "speaking": False}})
                 elif msg.get("type") == "ping":
