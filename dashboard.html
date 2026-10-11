@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IDA — RETROWAVE DASHBOARD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0a0014;
+    --pink: #ff2bd6;
+    --cyan: #00f0ff;
+    --purple: #7b2cbf;
+    --orange: #ff6b35;
+    --yellow: #ffe66d;
+    --panel: rgba(12, 0, 28, 0.78);
+    --border: rgba(255, 43, 214, 0.45);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: "Share Tech Mono", monospace;
+    color: #e8e0ff;
+    background: var(--bg);
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* ===== RETRO SCENE ===== */
+  .scene {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(123, 44, 191, 0.45), transparent 60%),
+      radial-gradient(ellipse 60% 40% at 50% 100%, rgba(255, 43, 214, 0.15), transparent 50%),
+      linear-gradient(180deg, #050010 0%, #120028 40%, #1a0033 70%, #2a0a1a 100%);
+  }
+  .stars {
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+      radial-gradient(1px 1px at 60% 70%, #fff, transparent),
+      radial-gradient(1px 1px at 80% 10%, #ff2bd6, transparent),
+      radial-gradient(1.5px 1.5px at 40% 80%, #00f0ff, transparent),
+      radial-gradient(1px 1px at 10% 60%, #fff, transparent),
+      radial-gradient(1px 1px at 90% 40%, #fff, transparent);
+    background-size: 100% 100%;
+    animation: twinkle 4s ease-in-out infinite alternate;
+    opacity: 0.7;
+  }
+  @keyframes twinkle { from { opacity: 0.45; } to { opacity: 0.9; } }
+
+  .sun {
+    position: absolute; left: 50%; top: 18%;
+    width: min(280px, 40vw); height: min(280px, 40vw);
+    transform: translate(-50%, -30%);
+    border-radius: 50%;
+    background: linear-gradient(180deg, #ffe66d 0%, #ff6b35 40%, #ff2bd6 100%);
+    box-shadow:
+      0 0 40px #ff6b35,
+      0 0 80px #ff2bd6,
+      0 0 120px rgba(255, 43, 214, 0.4);
+    animation: sunPulse 3s ease-in-out infinite;
+  }
+  .sun::before {
+    content: "";
+    position: absolute; inset: 0; border-radius: 50%;
+    background: repeating-linear-gradient(
+      180deg,
+      transparent 0 8px,
+      rgba(10, 0, 20, 0.35) 8px 12px
+    );
+  }
+  @keyframes sunPulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.15); }
+  }
+
+  .grid-floor {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 42%;
+    background:
+      linear-gradient(transparent 0%, rgba(10,0,20,0.2) 30%, rgba(10,0,20,0.85) 100%),
+      repeating-linear-gradient(90deg, transparent, transparent 48px, rgba(0, 240, 255, 0.25) 48px, rgba(0, 240, 255, 0.25) 50px),
+      repeating-linear-gradient(0deg, transparent, transparent 48px, rgba(255, 43, 214, 0.2) 48px, rgba(255, 43, 214, 0.2) 50px);
+    transform: perspective(400px) rotateX(60deg);
+    transform-origin: center top;
+    animation: gridScroll 12s linear infinite;
+    mask-image: linear-gradient(to bottom, transparent, black 20%);
+  }
+  @keyframes gridScroll {
+    from { background-position: 0 0, 0 0, 0 0; }
+    to { background-position: 0 0, 50px 0, 0 50px; }
+  }
+
+  .scanlines {
+    position: fixed; inset: 0; z-index: 50; pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.12) 2px,
+      rgba(0, 0, 0, 0.12) 4px
+    );
+    opacity: 0.5;
+  }
+  .vignette {
+    position: fixed; inset: 0; z-index: 49; pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.55) 100%);
+  }
+
+  /* ===== UI ===== */
+  .app {
+    position: relative; z-index: 10;
+    max-width: 1200px; margin: 0 auto;
+    padding: 1.25rem 1rem 2rem;
+    min-height: 100vh;
+    display: flex; flex-direction: column; gap: 1rem;
+  }
+
+  .topbar {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.85rem 1.1rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-shadow: 0 0 20px rgba(255, 43, 214, 0.15), inset 0 0 30px rgba(0, 240, 255, 0.03);
+    backdrop-filter: blur(12px);
+  }
+  .logo {
+    font-family: Orbitron, sans-serif;
+    font-weight: 800;
+    font-size: clamp(1.4rem, 4vw, 2rem);
+    letter-spacing: 0.12em;
+    background: linear-gradient(90deg, var(--cyan), var(--pink), var(--yellow));
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer 4s linear infinite;
+    text-shadow: none;
+    filter: drop-shadow(0 0 12px rgba(0, 240, 255, 0.5));
+  }
+  @keyframes shimmer {
+    to { background-position: 200% center; }
+  }
+  .logo span { font-weight: 400; font-size: 0.55em; opacity: 0.85; letter-spacing: 0.2em; }
+
+  .status-row { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid rgba(0, 240, 255, 0.4);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    color: var(--cyan);
+    background: rgba(0, 240, 255, 0.06);
+  }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 8px #22c55e;
+    animation: blink 1.4s ease-in-out infinite;
+  }
+  .dot.off { background: #ef4444; box-shadow: 0 0 8px #ef4444; animation: none; }
+  .dot.think { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
+  .dot.speak { background: var(--pink); box-shadow: 0 0 10px var(--pink); }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  @media (min-width: 900px) {
+    .grid { grid-template-columns: 280px 1fr 260px; }
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1rem;
+    backdrop-filter: blur(14px);
+    box-shadow:
+      0 0 0 1px rgba(0, 240, 255, 0.05),
+      0 0 24px rgba(255, 43, 214, 0.08);
+    position: relative;
+    overflow: hidden;
+  }
+  .panel::before {
+    content: "";
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan), var(--pink), transparent);
+    animation: scan 3s linear infinite;
+  }
+  @keyframes scan {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .panel-title {
+    font-family: Orbitron, sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    color: var(--pink);
+    margin-bottom: 0.85rem;
+    text-transform: uppercase;
+  }
+
+  .stat {
+    margin-bottom: 0.9rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    background: rgba(0, 0, 0, 0.25);
+  }
+  .stat-label { font-size: 0.65rem; color: var(--cyan); letter-spacing: 0.1em; }
+  .stat-value {
+    font-family: Orbitron, sans-serif;
+    font-size: 1.35rem;
+    color: #fff;
+    text-shadow: 0 0 10px var(--cyan);
+    margin-top: 0.2rem;
+  }
+  .bar {
+    height: 4px; margin-top: 0.5rem;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px; overflow: hidden;
+  }
+  .bar > i {
+    display: block; height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--cyan), var(--pink));
+    box-shadow: 0 0 8px var(--pink);
+    transition: width 0.8s ease;
+    animation: barGlow 2s ease-in-out infinite alternate;
+  }
+  @keyframes barGlow {
+    from { filter: brightness(1); }
+    to { filter: brightness(1.3); }
+  }
+
+  .avatar-box {
+    text-align: center;
+    padding: 1rem 0.5rem;
+  }
+  .avatar-ring {
+    width: 120px; height: 120px; margin: 0 auto 0.75rem;
+    border-radius: 50%;
+    border: 2px solid var(--pink);
+    box-shadow: 0 0 20px rgba(255, 43, 214, 0.5), inset 0 0 20px rgba(0, 240, 255, 0.2);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    animation: ringSpin 8s linear infinite;
+  }
+  .avatar-ring.speaking {
+    border-color: var(--cyan);
+    box-shadow: 0 0 30px rgba(0, 240, 255, 0.7), inset 0 0 25px rgba(255, 43, 214, 0.3);
+    animation: ringPulse 0.6s ease-in-out infinite;
+  }
+  .avatar-ring.thinking {
+    border-color: var(--yellow);
+    animation: ringSpin 2s linear infinite;
+  }
+  @keyframes ringSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes ringPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.06); }
+  }
+  .avatar-core {
+    width: 90px; height: 90px; border-radius: 50%;
+    background:
+      radial-gradient(circle at 30% 30%, #fff 0%, var(--cyan) 25%, var(--purple) 60%, #0a0014 100%);
+    font-family: Orbitron, sans-serif;
+    font-weight: 800;
+    font-size: 1.4rem;
+    color: #0a0014;
+    display: flex; align-items: center; justify-content: center;
+    animation: none;
+    transform: rotate(0deg);
+  }
+  .avatar-ring .avatar-core { animation: counterSpin 8s linear infinite; }
+  @keyframes counterSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(-360deg); }
+  }
+  .avatar-state {
+    font-size: 0.75rem;
+    color: var(--cyan);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .chat-panel {
+    display: flex; flex-direction: column;
+    min-height: 420px;
+    max-height: min(62vh, 560px);
+  }
+  .messages {
+    flex: 1; overflow-y: auto;
+    padding: 0.5rem 0.25rem 0.75rem;
+    display: flex; flex-direction: column; gap: 0.65rem;
+  }
+  .messages::-webkit-scrollbar { width: 6px; }
+  .messages::-webkit-scrollbar-thumb {
+    background: linear-gradient(var(--pink), var(--cyan));
+    border-radius: 3px;
+  }
+  .msg {
+    max-width: 88%;
+    padding: 0.65rem 0.85rem;
+    border-radius: 2px;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    animation: msgIn 0.35s ease;
+  }
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+  .msg.user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, rgba(255, 43, 214, 0.25), rgba(123, 44, 191, 0.35));
+    border: 1px solid rgba(255, 43, 214, 0.5);
+    box-shadow: 0 0 12px rgba(255, 43, 214, 0.15);
+  }
+  .msg.bot {
+    align-self: flex-start;
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.12), rgba(123, 44, 191, 0.2));
+    border: 1px solid rgba(0, 240, 255, 0.35);
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.1);
+  }
+  .msg .who {
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    margin-bottom: 0.25rem;
+    opacity: 0.7;
+  }
+
+  .composer {
+    display: flex; gap: 0.5rem;
+    border-top: 1px solid rgba(255, 43, 214, 0.25);
+    padding-top: 0.75rem;
+  }
+  .composer input {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(0, 240, 255, 0.35);
+    color: #fff;
+    padding: 0.7rem 0.9rem;
+    font-family: inherit;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .composer input:focus {
+    border-color: var(--pink);
+    box-shadow: 0 0 12px rgba(255, 43, 214, 0.3);
+  }
+  .composer input::placeholder { color: rgba(232, 224, 255, 0.35); }
+  .composer button {
+    font-family: Orbitron, sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    padding: 0 1.1rem;
+    border: 1px solid var(--cyan);
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.2), rgba(255, 43, 214, 0.25));
+    color: #fff;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .composer button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.4);
+  }
+  .composer button:disabled { opacity: 0.5; cursor: wait; }
+
+  .side-list { font-size: 0.8rem; line-height: 1.6; }
+  .side-list li { list-style: none; padding: 0.35rem 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .side-list li::before {
+    content: "▸ ";
+    color: var(--pink);
+  }
+  .neon-line {
+    height: 1px; margin: 0.75rem 0;
+    background: linear-gradient(90deg, transparent, var(--cyan), var(--pink), transparent);
+  }
+  .clock {
+    font-family: Orbitron, sans-serif;
+    font-size: 1.1rem;
+    color: var(--cyan);
+    text-shadow: 0 0 10px var(--cyan);
+  }
+  .footer {
+    text-align: center;
+    font-size: 0.7rem;
+    color: rgba(232, 224, 255, 0.4);
+    letter-spacing: 0.15em;
+  }
+  .footer a { color: var(--pink); text-decoration: none; }
+</style>
+</head>
+<body>
+  <div class="scene">
+    <div class="stars"></div>
+    <div class="sun"></div>
+    <div class="grid-floor"></div>
+  </div>
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
+
+  <div class="app">
+    <header class="topbar">
+      <div class="logo">IDA <span>v5.2 RETROWAVE</span></div>
+      <div class="status-row">
+        <div class="pill"><span class="dot" id="connDot"></span> <span id="connLabel">CONNECTING…</span></div>
+        <div class="pill" id="avatarPill">AVATAR: IDLE</div>
+        <div class="pill clock" id="clock">--:--:--</div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- LEFT -->
+      <aside class="panel">
+        <div class="panel-title">// System</div>
+        <div class="stat">
+          <div class="stat-label">INTERACTIONS</div>
+          <div class="stat-value" id="statInteractions">0</div>
+          <div class="bar"><i id="barInteractions" style="width:20%"></i></div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">PROFILE</div>
+          <div class="stat-value" id="statName" style="font-size:1rem">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">CITY</div>
+          <div class="stat-value" id="statCity" style="font-size:1rem">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">FACTS</div>
+          <div class="stat-value" id="statFacts">0</div>
+          <div class="bar"><i id="barFacts" style="width:10%"></i></div>
+        </div>
+        <div class="neon-line"></div>
+        <div class="panel-title">// Link</div>
+        <ul class="side-list">
+          <li>API :8000</li>
+          <li>WS /ws</li>
+          <li>JARVIS mode</li>
+          <li>Mobile Expo</li>
+        </ul>
+      </aside>
+
+      <!-- CENTER CHAT -->
+      <section class="panel chat-panel">
+        <div class="panel-title">// Neural Link</div>
+        <div class="messages" id="messages"></div>
+        <div class="composer">
+          <input id="input" type="text" placeholder="Скажи IDA…" autocomplete="off" />
+          <button id="sendBtn" type="button">Send</button>
+        </div>
+      </section>
+
+      <!-- RIGHT AVATAR -->
+      <aside class="panel">
+        <div class="panel-title">// Avatar</div>
+        <div class="avatar-box">
+          <div class="avatar-ring" id="avatarRing">
+            <div class="avatar-core">IDA</div>
+          </div>
+          <div class="avatar-state" id="avatarState">idle · listening</div>
+        </div>
+        <div class="neon-line"></div>
+        <div class="panel-title">// Protocols</div>
+        <ul class="side-list">
+          <li>thinking → pink sun</li>
+          <li>speaking → cyan pulse</li>
+          <li>profile memory</li>
+          <li>retrowave UI</li>
+        </ul>
+      </aside>
+    </div>
+
+    <footer class="footer">
+      IDA RETROWAVE DASHBOARD · <a href="/health">/health</a> · <a href="/api/profile">/api/profile</a>
+    </footer>
+  </div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const messagesEl = $("messages");
+  const input = $("input");
+  const sendBtn = $("sendBtn");
+  const connDot = $("connDot");
+  const connLabel = $("connLabel");
+  const avatarRing = $("avatarRing");
+  const avatarState = $("avatarState");
+  const avatarPill = $("avatarPill");
+
+  function addMsg(text, who) {
+    const div = document.createElement("div");
+    div.className = "msg " + (who === "user" ? "user" : "bot");
+    div.innerHTML = '<div class="who">' + (who === "user" ? "YOU" : "IDA") + "</div>" +
+      escapeHtml(text).replace(/\n/g, "<br>");
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function setConn(ok) {
+    connDot.classList.toggle("off", !ok);
+    connLabel.textContent = ok ? "ONLINE" : "OFFLINE";
+  }
+
+  function setAvatar(state) {
+    avatarRing.classList.remove("speaking", "thinking");
+    if (state === "speaking") avatarRing.classList.add("speaking");
+    if (state === "thinking") avatarRing.classList.add("thinking");
+    const labels = {
+      idle: "idle · listening",
+      thinking: "thinking…",
+      speaking: "speaking",
+    };
+    avatarState.textContent = labels[state] || state;
+    avatarPill.textContent = "AVATAR: " + (state || "idle").toUpperCase();
+    connDot.classList.remove("think", "speak");
+    if (state === "thinking") connDot.classList.add("think");
+    if (state === "speaking") connDot.classList.add("speak");
+  }
+
+  async function refreshStats() {
+    try {
+      const h = await fetch("/health").then((r) => r.json());
+      setConn(h.status === "ok");
+      if (h.profile) {
+        $("statName").textContent = h.profile.name || "—";
+        $("statCity").textContent = h.profile.city || "—";
+        $("statFacts").textContent = h.profile.facts_count || 0;
+        $("barFacts").style.width = Math.min(100, (h.profile.facts_count || 0) * 8) + "%";
+      }
+      const s = await fetch("/api/stats").then((r) => r.json()).catch(() => ({}));
+      const n = s.interactions_count || 0;
+      $("statInteractions").textContent = n;
+      $("barInteractions").style.width = Math.min(100, 15 + (n % 80)) + "%";
+      if (s.name) $("statName").textContent = s.name;
+    } catch (e) {
+      setConn(false);
+    }
+  }
+
+  async function send() {
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = "";
+    addMsg(text, "user");
+    sendBtn.disabled = true;
+    setAvatar("thinking");
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text }),
+      });
+      const data = await res.json();
+      setAvatar("speaking");
+      addMsg(data.response || data.error || "…", "bot");
+      setTimeout(() => setAvatar("idle"), 600);
+      refreshStats();
+    } catch (e) {
+      addMsg("Нет связи с API. Запусти ./start.sh", "bot");
+      setConn(false);
+      setAvatar("idle");
+    } finally {
+      sendBtn.disabled = false;
+      input.focus();
+    }
+  }
+
+  sendBtn.addEventListener("click", send);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") send();
+  });
+
+  // WebSocket avatar states
+  function connectWs() {
+    const proto = location.protocol === "https:" ? "wss:" : "ws:";
+    const ws = new WebSocket(proto + "//" + location.host + "/ws");
+    ws.onopen = () => setConn(true);
+    ws.onclose = () => {
+      setConn(false);
+      setTimeout(connectWs, 3000);
+    };
+    ws.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data);
+        if (msg.type === "avatar_state" && msg.data) {
+          setAvatar(msg.data.state || "idle");
+        }
+      } catch (_) {}
+    };
+  }
+
+  function tickClock() {
+    const d = new Date();
+    $("clock").textContent = d.toLocaleTimeString("ru-RU", { hour12: false });
+  }
+
+  addMsg("Нейролинк активен. Я IDA — ретровейв-Джарвис. Спрашивай.", "bot");
+  refreshStats();
+  setInterval(refreshStats, 15000);
+  tickClock();
+  setInterval(tickClock, 1000);
+  connectWs();
+})();
+</script>
+</body>
+</html>

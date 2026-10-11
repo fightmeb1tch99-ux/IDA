@@ -34,15 +34,17 @@
 
 ## 📅 Последнее обновление
 
-**2026-10-10** — качество: Unified API, профиль пользователя, TTS для аватара.
+**2026-10-11** — анимированный **retrowave** дашборд IDA.
 
-- **Единый API** `api_server.py` на `:8000` — `/api/chat`, `/ws`, `/api/profile`, `/api/tts`
-- **Профиль** в памяти: имя, город, факты, summary (учитывается в промпте Джарвиса)
-- **TTS** `synthesize_to_file` (edge-tts / pyttsx3) + хук `avatar_state` для lip-sync
-- Launcher поднимает один сервис вместо web+realtime
-- Мобилка: WS на том же хосте `/ws`
+- `dashboard.html` — солнце, сетка, scanlines, неон-чат, аватар-кольцо
+- Live stats из `/health` + `/api/profile`, WS `avatar_state`
+- Маршруты Unified API: `/` и `/dashboard`
+- React `Dashboard.tsx` в том же стиле + ссылка на полный UI
 
-Запуск: `./start.sh`
+Открой после `./start.sh`: **http://127.0.0.1:8000/**
+
+---
+
 
 ---
 

@@ -290,19 +290,26 @@ async def websocket_endpoint(ws: WebSocket):
         connected.discard(ws)
 
 
+def _load_dashboard() -> str:
+    for name in ("dashboard.html", "web_chat.html"):
+        path = ROOT / name
+        if path.exists():
+            return path.read_text(encoding="utf-8")
+    return """<!DOCTYPE html><html><head><meta charset=utf-8><title>IDA</title></head>
+<body style="font-family:system-ui;background:#0a0014;color:#e2e8f0;padding:2rem">
+<h1>IDA Unified API</h1>
+<p>POST /api/chat · WS /ws · GET /health</p>
+</body></html>"""
+
+
 @app.get("/", response_class=HTMLResponse)
 async def root_page():
-    html_path = ROOT / "web_chat.html"
-    if html_path.exists():
-        return HTMLResponse(html_path.read_text(encoding="utf-8"))
-    return HTMLResponse(
-        """<!DOCTYPE html><html><head><meta charset=utf-8><title>IDA</title></head>
-<body style="font-family:system-ui;background:#0a0e1a;color:#e2e8f0;padding:2rem">
-<h1>IDA Unified API</h1>
-<p>POST /api/chat · WS /ws · GET /health · GET /api/profile</p>
-<p><a href="/health" style="color:#38bdf8">/health</a></p>
-</body></html>"""
-    )
+    return HTMLResponse(_load_dashboard())
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard_page():
+    return HTMLResponse(_load_dashboard())
 
 
 def run(host: str = "0.0.0.0", port: int = 8000):
