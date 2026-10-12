@@ -6,23 +6,12 @@ Handles NLP, command parsing, and response generation.
 import re
 import os
 
-try:
-    from openai import OpenAI
-    _openai_available = True
-except ImportError:
-    _openai_available = False
-
-try:
-    from groq import Groq
-    _groq_available = True
-except ImportError:
-    _groq_available = False
-
 from logger import log_info, log_error, log_debug, log_warning
 from config import (
     LLM_MODEL, LLM_TEMPERATURE, LLM_MAX_TOKENS,
-    OPENAI_API_KEY, OPENAI_API_BASE, CONTEXT_WINDOW,
+    CONTEXT_WINDOW,
 )
+from llm_providers import get_router
 
 
 class CommandParser:
@@ -123,39 +112,14 @@ class Brain:
         self.memory = memory
         self.conversation_history = []
         self.parser = CommandParser()
-        self.client = None
-        self.groq_client = None
-        self.use_groq = False
-
-        # Try Groq first (free, recommended for Termux)
-        groq_key = (os.getenv("GROQ_API_KEY") or "").strip()
-        if _groq_available and groq_key and groq_key.startswith("gsk_"):
-            try:
-                self.groq_client = Groq(api_key=groq_key)
-                self.use_groq = True
-                log_info("Groq client OK (free LLM)")
-            except Exception as e:
-                log_error("Failed to initialize Groq client", e)
-                self.use_groq = False
-        elif groq_key and not groq_key.startswith("gsk_"):
-            log_warning("GROQ_API_KEY выглядит неправильно (должен начинаться с gsk_)")
-
-        # Fallback to OpenAI only if Groq not available
-        if not self.use_groq and _openai_available:
-            api_key = (OPENAI_API_KEY or os.getenv("OPENAI_API_KEY") or "").strip()
-            api_base = OPENAI_API_BASE or os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
-            # Skip obvious placeholders / empty
-            if api_key and api_key not in ("sk-...", "sk-proj-...", "your_key_here") and len(api_key) > 20:
-                try:
-                    self.client = OpenAI(api_key=api_key, base_url=api_base)
-                    log_info(f"OpenAI client initialized (model: {LLM_MODEL})")
-                except Exception as e:
-                    log_error("Failed to initialize OpenAI client", e)
-            else:
-                log_warning(
-                    "Нет рабочего API-ключа. Добавь GROQ_API_KEY в .env — "
-                    "бесплатно: https://console.groq.com/keys"
-                )
+        self.router = get_router()
+        self.use_groq = self.router.is_available() and self.router.primary_name == "groq"
+        self.client = self.router  # back-compat: truthy if any provider
+        if not self.router.is_available():
+            log_warning(
+                "Нет рабочего API-ключа. Добавь GROQ_API_KEY в .env — "
+                "бесплатно: https://console.groq.com/keys"
+            )
 
     def decide_tool(self, text: str):
         return self.parser.parse(text)
@@ -211,13 +175,13 @@ class Brain:
 
         # Tool result
         if tool_result is not None:
-            if self.use_groq or self.client:
+            if self.router.is_available():
                 prompt = f"Пользователь спросил: «{user_input}». Результат: {tool_result}. Прокомментируй кратко и дружелюбно по-русски."
                 return self._get_llm_response(prompt)
             return str(tool_result)
 
         # LLM (Groq or OpenAI)
-        if self.use_groq or self.client:
+        if self.router.is_available():
             return self._get_llm_response(user_input)
 
         return (
@@ -278,7 +242,7 @@ class Brain:
                 f"Факты: {facts_s}.\n"
                 f"Недавние эпизоды: {ep_s}.\n"
                 f"Summary: {summary[:300]}.\n"
-                "Версия: IDA v5.3 (AIRI-inspired memory)."
+                "Версия: IDA v5.3 (multi-LLM router + memory)."
             )
             messages = [{"role": "system", "content": system_prompt}]
             for entry in self.conversation_history[-CONTEXT_WINDOW:]:
@@ -286,27 +250,15 @@ class Brain:
                 messages.append({"role": "assistant", "content": entry["response"]})
             messages.append({"role": "user", "content": user_input})
 
-            # Use Groq if available
-            if self.use_groq and self.groq_client:
-                response = self.groq_client.chat.completions.create(
-                    model=os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"),
-                    messages=messages,
-                    temperature=0.7,
-                    max_tokens=1024,
-                )
-            # Fallback to OpenAI
-            elif self.client:
-                response = self.client.chat.completions.create(
-                    model=LLM_MODEL,
-                    messages=messages,
-                    temperature=LLM_TEMPERATURE,
-                    max_tokens=LLM_MAX_TOKENS,
-                )
-            else:
+            if not self.router.is_available():
                 return "Нет доступных LLM сервисов."
-            
-            if response and response.choices:
-                return response.choices[0].message.content.strip()
+            result = self.router.chat(
+                messages,
+                temperature=LLM_TEMPERATURE,
+                max_tokens=LLM_MAX_TOKENS,
+            )
+            if result and result.content:
+                return result.content
             return "Извини, не смог получить ответ."
         except Exception as e:
             log_error("LLM Error", e)
