@@ -43,7 +43,7 @@ SEARCH_API = "https://api.duckduckgo.com"
 
 # Agent identity
 AGENT_NAME = "IDA"
-AGENT_VERSION = "3.0"
+AGENT_VERSION = "5.3"
 AGENT_FULL_NAME = "Инновационный динамический помощник"
 GREETING_EMOJI = "🤖"
 HELP_EMOJI = "📚"
@@ -67,3 +67,10 @@ ENABLE_INPUT_VALIDATION = True
 ENABLE_PATH_TRAVERSAL_PROTECTION = True
 ENABLE_COMMAND_WHITELISTING = True
 MAX_INPUT_LENGTH = 4096
+
+
+# Multi-LLM router (AIRI-style)
+# IDA_LLM_PROVIDER=groq|openai|ollama|openrouter
+# OPENROUTER_API_KEY=
+# OLLAMA_BASE_URL=http://127.0.0.1:11434
+# OLLAMA_MODEL=llama3.2
