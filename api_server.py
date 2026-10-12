@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-IDA Unified API — один сервис на :8000
+IDA Unified API v5.3 — один сервис на :8000
 HTTP + WebSocket + профиль + TTS-хук для аватара.
 
 Запуск:
@@ -39,7 +39,7 @@ from memory_manager import MemoryManager
 from brain import Brain
 from tools.tools import TOOLS
 
-app = FastAPI(title="IDA Unified API", version="5.2")
+app = FastAPI(title="IDA Unified API v5.3", version="5.3")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -87,6 +87,22 @@ def process_message(message: str) -> str:
         log_error("process_message", e)
         return f"Сбой агента: {e}"
 
+
+
+def detect_emotion(text: str) -> str:
+    """Simple emotion tag for Live2D (AIRI-style states)."""
+    t = (text or "").lower()
+    if any(w in t for w in ("ха", "лол", "ахах", "смеш", "😂", "😄", "прикол")):
+        return "happy"
+    if any(w in t for w in ("груст", "жал", "прости", "увы", "печал", "😢")):
+        return "sad"
+    if any(w in t for w in ("злюсь", "бесит", "злой", "нельзя", "осторож", "⚠")):
+        return "serious"
+    if any(w in t for w in ("вау", "круто", "ого", "отлично", "супер", "🔥")):
+        return "excited"
+    if "?" in (text or ""):
+        return "curious"
+    return "neutral"
 
 async def broadcast(payload: dict) -> None:
     data = json.dumps(payload, ensure_ascii=False)
@@ -138,7 +154,7 @@ async def chat(req: ChatRequest):
     await broadcast(
         {
             "type": "avatar_state",
-            "data": {"state": "thinking", "isSpeaking": False, "isListening": False},
+            "data": {"state": "thinking", "emotion": "curious", "isSpeaking": False, "isListening": False, "motion": "think"},
         }
     )
     loop = asyncio.get_event_loop()
@@ -148,9 +164,11 @@ async def chat(req: ChatRequest):
             "type": "avatar_state",
             "data": {
                 "state": "speaking",
+                "emotion": detect_emotion(reply),
                 "isSpeaking": True,
                 "isListening": False,
                 "text": reply,
+                "motion": "talk",
             },
         }
     )
@@ -168,7 +186,7 @@ async def chat(req: ChatRequest):
     await broadcast(
         {
             "type": "avatar_state",
-            "data": {"state": "idle", "isSpeaking": False, "isListening": True},
+            "data": {"state": "idle", "emotion": "neutral", "isSpeaking": False, "isListening": True, "motion": "idle"},
         }
     )
     return {"response": reply, "audio_url": audio_url, "profile": memory_mgr.get_profile_public()}
@@ -227,7 +245,7 @@ async def websocket_endpoint(ws: WebSocket):
         json.dumps(
             {
                 "type": "avatar_state",
-                "data": {"state": "idle", "isSpeaking": False, "isListening": True},
+                "data": {"state": "idle", "emotion": "neutral", "isSpeaking": False, "isListening": True, "motion": "idle"},
             },
             ensure_ascii=False,
         )
@@ -297,7 +315,7 @@ def _load_dashboard() -> str:
             return path.read_text(encoding="utf-8")
     return """<!DOCTYPE html><html><head><meta charset=utf-8><title>IDA</title></head>
 <body style="font-family:system-ui;background:#0a0014;color:#e2e8f0;padding:2rem">
-<h1>IDA Unified API</h1>
+<h1>IDA Unified API v5.3</h1>
 <p>POST /api/chat · WS /ws · GET /health</p>
 </body></html>"""
 
@@ -313,7 +331,7 @@ async def dashboard_page():
 
 
 def run(host: str = "0.0.0.0", port: int = 8000):
-    log_info(f"IDA Unified API → http://{host}:{port}  ws://{host}:{port}/ws")
+    log_info(f"IDA Unified API v5.3 → http://{host}:{port}  ws://{host}:{port}/ws")
     uvicorn.run(app, host=host, port=port, log_level="info")
 
 
