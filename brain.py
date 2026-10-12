@@ -228,6 +228,27 @@ class Brain:
 
     def add_to_history(self, user_input: str, response: str):
         self.conversation_history.append({"user": user_input, "response": response})
+        # AIRI-style episodic tracking on the memory dict
+        try:
+            n = int(self.memory.get("turns_since_summary") or 0) + 1
+            self.memory["turns_since_summary"] = n
+            if n >= 8 and len(self.conversation_history) >= 4:
+                recent = self.conversation_history[-8:]
+                bits = []
+                for e in recent:
+                    u = (e.get("user") or "")[:80]
+                    a = (e.get("response") or "")[:80]
+                    bits.append(f"U:{u} → A:{a}")
+                ep = " | ".join(bits)[:700]
+                episodes = list(self.memory.get("episodes") or [])
+                episodes.append({"ts": __import__("datetime").datetime.now().isoformat(), "summary": ep, "tags": []})
+                self.memory["episodes"] = episodes[-30:]
+                self.memory["turns_since_summary"] = 0
+                self.memory["summary"] = " | ".join(x["summary"][:100] for x in episodes[-3:])
+                if "profile" in self.memory and isinstance(self.memory["profile"], dict):
+                    self.memory["profile"]["summary"] = self.memory["summary"]
+        except Exception:
+            pass
 
     def get_history(self):
         return self.conversation_history
@@ -238,7 +259,12 @@ class Brain:
             name = profile.get("name") or self.memory.get("name") or "неизвестно"
             city = profile.get("city") or self.memory.get("city") or "не указан"
             facts = profile.get("facts") or self.memory.get("facts") or []
-            facts_s = "; ".join(facts[-5:]) if facts else "нет"
+            facts_s = "; ".join(facts[-8:]) if facts else "нет"
+            core = self.memory.get("core_memory") or []
+            core_s = "; ".join(core[-10:]) if core else "нет"
+            episodes = self.memory.get("episodes") or []
+            ep_s = " || ".join((e.get("summary") or "")[:100] for e in episodes[-3:]) if episodes else "нет"
+            summary = profile.get("summary") or self.memory.get("summary") or ""
             system_prompt = (
                 "Ты — IDA, персональный ИИ-компаньон в духе ДЖАРВИСА (JARVIS). "
                 "Ты живой цифровой аватар: внимательный, спокойный, чуть ироничный, всегда на стороне пользователя. "
@@ -247,8 +273,12 @@ class Brain:
                 "Проявляй инициативу: предлагай следующий шаг, предупреждай о рисках, напоминай о контексте. "
                 "У тебя есть аватар (Live2D) и голос: отвечай так, будто говоришь вслух, живо и естественно. "
                 "Не выдумывай факты. Если чего-то не знаешь — скажи прямо и предложи, как узнать. "
-                f"Имя пользователя: {name}. Город: {city}. Известные факты: {facts_s}. "
-                "Версия: IDA v5.2."
+                f"Имя пользователя: {name}. Город: {city}.\n"
+                f"Core memory: {core_s}.\n"
+                f"Факты: {facts_s}.\n"
+                f"Недавние эпизоды: {ep_s}.\n"
+                f"Summary: {summary[:300]}.\n"
+                "Версия: IDA v5.3 (AIRI-inspired memory)."
             )
             messages = [{"role": "system", "content": system_prompt}]
             for entry in self.conversation_history[-CONTEXT_WINDOW:]:
