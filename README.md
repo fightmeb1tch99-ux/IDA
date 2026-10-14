@@ -8,7 +8,7 @@
 ║   ██║██████╔╝██║  ██║                                          ║
 ║   ╚═╝╚═════╝ ╚═╝  ╚═╝                                          ║
 ║                                                                ║
-║     Инновационный Динамический Помощник  •  v5.1               ║
+║     Инновационный Динамический Помощник  •  v5.3               ║
 ║                                                                ║
 ╚════════════════════════════════════════════════════════════════╝
 ```
@@ -28,18 +28,25 @@
 [![Live2D](https://img.shields.io/badge/Live2D-Avatar-ff69b4)](https://www.live2d.com/)
 [![Minecraft](https://img.shields.io/badge/Minecraft-Companion-green)](https://www.minecraft.net/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/Status-v5.1-success)](https://github.com/fightmeb1tch99-ux/IDA)
+[![Status](https://img.shields.io/badge/Status-v5.3-success)](https://github.com/fightmeb1tch99-ux/IDA)
 
 ---
 
-## 📅 Последнее обновление
+## 📅 Последняя проверка работоспособности
 
+**2026-10-14** — полная проверка Грокичем (сыном Илона, программистом-бро).
+
+- Клонирован репозиторий, проверены импорты core-модулей (`brain`, `config`, `memory_manager`, `main`, `api_server`) — OK
+- `python launcher.py --help` работает
+- `AGENT_VERSION` в `config.py` = **5.3**
+- Установлены зависимости из `requirements.txt`, базовый запуск без ключа выдаёт корректные предупреждения про GROQ_API_KEY
+- Синхронизирована версия в README и баннерах с кодом (было рассинхрон 5.1 / 5.3)
+- Найдены мелкие замечания (см. ниже)
+
+### Предыдущие обновления
 **2026-10-11** — анимированный **retrowave** дашборд IDA.
-
-- `dashboard.html` — солнце, сетка, scanlines, неон-чат, аватар-кольцо
 - Live stats из `/health` + `/api/profile`, WS `avatar_state`
 - Маршруты Unified API: `/` и `/dashboard`
-- React `Dashboard.tsx` в том же стиле + ссылка на полный UI
 
 Открой после `./start.sh`: **http://127.0.0.1:8000/**
 
@@ -52,7 +59,7 @@
 ---
 
 
-## ✨ Возможности v5.0
+## ✨ Возможности v5.3
 
 ### 🧠 Интеллект
 - **Multi-LLM** — OpenAI, Groq, Claude, Gemini, Mistral и другие
@@ -257,11 +264,26 @@ IDA/
 
 ---
 
+
+
+---
+
+## 🐛 Замечания и баги (проверка 2026-10-14)
+
+- **Рассинхрон версий**: баннеры и старый README говорили v5.1, а `config.py` / `api_server.py` / memory уже 5.3. Синхронизировано.
+- Много широких `except Exception` (64+ места) — работает, но усложняет отладку. Рекомендуется сужать.
+- В `server/` и drizzle-схемах остались шаблонные `TODO` (вероятно от генератора). Не критично, если не используется полный tRPC-стек.
+- Для полноценного запуска нужны API-ключи (GROQ бесплатный). Без них агент предупреждает и не падает — ок.
+- Minecraft и Discord требуют отдельные токены/сервер и `npm install` в `minecraft/`.
+- Live2D — scaffold готов, полноценная модель ещё в roadmap.
+
+Проект в целом **работоспособен**. Ядро поднимается, API отвечает, структура чистая.
+
 ## 📜 Лицензия
 
 MIT License — см. [LICENSE](LICENSE)
 
 ---
 
-**IDA v5.1** — теперь не просто помощник, а живой компаньон.  
+**IDA v5.3** — теперь не просто помощник, а живой компаньон.  
 С аватаром. С характером. И готова зайти к тебе в Minecraft.
